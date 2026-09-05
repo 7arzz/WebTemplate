@@ -16,22 +16,19 @@ export const defaultData = {
       id: 1,
       name: "Training Skills",
       description: "Pelatihan skill profesional untuk meningkatkan kapasitas tim dan individu.",
-      price: "Mulai Rp 1.000.000",
-      image: "https://images.unsplash.com/photo-1524178232363-1fb2b075b655?q=80&w=800&auto=format&fit=crop"
+      price: "Mulai Rp 1.000.000"
     },
     {
       id: 2,
       name: "EO & WO",
       description: "Layanan Event Organizer dan Wedding Organizer terpercaya.",
-      price: "Mulai Rp 10.000.000",
-      image: "https://images.unsplash.com/photo-1511795409834-ef04bbd61622?q=80&w=800&auto=format&fit=crop"
+      price: "Mulai Rp 10.000.000"
     },
     {
       id: 3,
       name: "Bisnis Planner",
       description: "Konsultasi dan perencanaan bisnis strategis.",
-      price: "Hubungi Kami",
-      image: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?q=80&w=800&auto=format&fit=crop"
+      price: "Hubungi Kami"
     }
   ],
   portfolio: [
