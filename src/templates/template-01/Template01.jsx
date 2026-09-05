@@ -411,7 +411,8 @@ const Template01 = ({ data }) => {
 
       {/* Footer */}
       <footer className="py-8 border-t border-opacity-20 border-white text-center text-sm opacity-80" style={footerStyle}>
-        <p>&copy; {new Date().getFullYear()} {business.name}. All rights reserved.</p>
+        <p className="mb-2">&copy; {new Date().getFullYear()} {business.name}. All rights reserved.</p>
+        <p className="text-xs opacity-60">Prototype by 7arzz</p>
       </footer>
 
       {/* Floating WhatsApp Button */}
