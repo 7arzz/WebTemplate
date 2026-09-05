@@ -4,6 +4,13 @@ const Template01 = ({ data }) => {
   const { business, theme, services, portfolio, testimonials, contact } = data;
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [activeTestimonial, setActiveTestimonial] = useState(0);
+  const [bookingForm, setBookingForm] = useState({ name: '', service: '', notes: '' });
+
+  const handleBookingSubmit = () => {
+    const message = `Halo, saya ingin booking layanan.\n\nNama: ${bookingForm.name}\nLayanan: ${bookingForm.service}\nCatatan: ${bookingForm.notes}`;
+    const waUrl = `https://wa.me/${contact.whatsapp}?text=${encodeURIComponent(message)}`;
+    window.open(waUrl, '_blank');
+  };
 
   const getStyle = (secId, defaultBg, defaultText) => ({
     backgroundColor: theme[`${secId}Bg`] || defaultBg,
@@ -27,9 +34,9 @@ const Template01 = ({ data }) => {
   const textAccent = { color: theme.accentColor };
 
   return (
-    <div className="font-sans overflow-x-hidden w-full transition-colors duration-300" style={aboutStyle}>
+    <div className="font-sans w-full transition-colors duration-300" style={aboutStyle}>
       {/* Navbar */}
-      <nav className="p-4 sticky top-0 z-40 shadow-sm transition-colors duration-300 relative" style={navbarStyle}>
+      <nav className="p-4 sticky top-0 z-50 shadow-sm transition-colors duration-300" style={navbarStyle}>
         <div className="max-w-7xl mx-auto flex justify-between items-center relative z-50">
           <div className="flex items-center space-x-3">
             {business.logoURL && (
@@ -94,7 +101,7 @@ const Template01 = ({ data }) => {
         )}
       </nav>
 
-      <main>
+      <main className="overflow-x-hidden">
         {/* Hero Section */}
         <section id="beranda" className="py-32 px-4 text-center transition-colors duration-300" style={heroStyle}>
           <h1 className="text-4xl md:text-6xl font-bold mb-4 max-w-4xl mx-auto leading-tight">
@@ -376,29 +383,42 @@ const Template01 = ({ data }) => {
           <div className="max-w-3xl mx-auto">
             <h2 className="text-4xl font-bold mb-8 text-center">Booking Layanan</h2>
             <form className="space-y-4 p-8 rounded-xl shadow-xl border border-opacity-10" style={{ borderColor: bookingStyle.color, backgroundColor: 'rgba(255,255,255,0.05)' }}>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-semibold mb-1 opacity-80">Nama Lengkap</label>
-                  <input type="text" className="w-full p-3 rounded border border-opacity-20 bg-transparent focus:border-opacity-100 outline-none transition-colors" style={{ borderColor: bookingStyle.color, color: bookingStyle.color }} placeholder="Nama Anda" />
-                </div>
-                <div>
-                  <label className="block text-sm font-semibold mb-1 opacity-80">Nomor WhatsApp</label>
-                  <input type="text" className="w-full p-3 rounded border border-opacity-20 bg-transparent focus:border-opacity-100 outline-none transition-colors" style={{ borderColor: bookingStyle.color, color: bookingStyle.color }} placeholder="08..." />
-                </div>
+              <div>
+                <label className="block text-sm font-semibold mb-1 opacity-80">Nama Lengkap</label>
+                <input 
+                  type="text" 
+                  value={bookingForm.name}
+                  onChange={(e) => setBookingForm({...bookingForm, name: e.target.value})}
+                  className="w-full p-3 rounded border border-opacity-20 bg-transparent focus:border-opacity-100 outline-none transition-colors" 
+                  style={{ borderColor: bookingStyle.color, color: bookingStyle.color }} 
+                  placeholder="Nama Anda" 
+                />
               </div>
               <div>
                 <label className="block text-sm font-semibold mb-1 opacity-80">Pilih Layanan</label>
-                <select className="w-full p-3 rounded border border-opacity-20 bg-transparent focus:border-opacity-100 outline-none transition-colors" style={{ borderColor: bookingStyle.color, color: bookingStyle.color }}>
+                <select 
+                  value={bookingForm.service}
+                  onChange={(e) => setBookingForm({...bookingForm, service: e.target.value})}
+                  className="w-full p-3 rounded border border-opacity-20 bg-transparent focus:border-opacity-100 outline-none transition-colors" 
+                  style={{ borderColor: bookingStyle.color, color: bookingStyle.color }}
+                >
                   <option value="" style={{ color: '#000' }}>Pilih salah satu...</option>
                   {services.map((s, i) => <option key={i} value={s.name} style={{ color: '#000' }}>{s.name}</option>)}
                 </select>
               </div>
               <div>
                 <label className="block text-sm font-semibold mb-1 opacity-80">Catatan Tambahan</label>
-                <textarea className="w-full p-3 rounded border border-opacity-20 bg-transparent focus:border-opacity-100 outline-none transition-colors h-24" style={{ borderColor: bookingStyle.color, color: bookingStyle.color }} placeholder="Detail pesanan..." />
+                <textarea 
+                  value={bookingForm.notes}
+                  onChange={(e) => setBookingForm({...bookingForm, notes: e.target.value})}
+                  className="w-full p-3 rounded border border-opacity-20 bg-transparent focus:border-opacity-100 outline-none transition-colors h-24" 
+                  style={{ borderColor: bookingStyle.color, color: bookingStyle.color }} 
+                  placeholder="Detail pesanan..." 
+                />
               </div>
               <button 
                 type="button" 
+                onClick={handleBookingSubmit}
                 className="w-full py-4 rounded-lg font-bold text-lg mt-4 shadow-lg hover:opacity-90 transition-opacity" 
                 style={getBtnStyle('booking', theme.secondaryColor, theme.primaryColor)}
               >
