@@ -1,11 +1,52 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { generateWebsiteContent } from '../../utils/aiService';
+import { collection, getDocs, query, orderBy } from 'firebase/firestore';
+import { db } from '../../utils/firebase';
 
 const EditorForm = ({ data, setData, activeTab }) => {
   const [aiPrompt, setAiPrompt] = useState('');
   const [aiLoading, setAiLoading] = useState(false);
   const [aiError, setAiError] = useState('');
   const [aiSuccess, setAiSuccess] = useState(false);
+  const [importSuccess, setImportSuccess] = useState('');
+  const [customers, setCustomers] = useState([]);
+  const [loadingCustomers, setLoadingCustomers] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+
+  useEffect(() => {
+    if (activeTab === 'import' && customers.length === 0) {
+      fetchCustomers();
+    }
+  }, [activeTab]);
+
+  const fetchCustomers = async () => {
+    try {
+      setLoadingCustomers(true);
+      const q = query(collection(db, "customers"), orderBy("createdAt", "desc"));
+      const snapshot = await getDocs(q);
+      const docs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      setCustomers(docs);
+    } catch (error) {
+      console.error("Error fetching customers:", error);
+    } finally {
+      setLoadingCustomers(false);
+    }
+  };
+
+  const handleImportCustomer = (customer) => {
+    setData(prev => {
+      const newData = JSON.parse(JSON.stringify(prev));
+      if (customer.businessName) newData.business.name = customer.businessName;
+      if (customer.slogan) newData.business.description = customer.slogan;
+      if (customer.aboutUs) newData.business.about = customer.aboutUs;
+      if (customer.primaryColor) newData.theme.primaryColor = customer.primaryColor;
+      if (customer.secondaryColor) newData.theme.secondaryColor = customer.secondaryColor;
+      if (customer.accentColor) newData.theme.accentColor = customer.accentColor;
+      return newData;
+    });
+    setImportSuccess(`Data ${customer.businessName || 'Customer'} berhasil diimport!`);
+    setTimeout(() => setImportSuccess(''), 5000);
+  };
 
   const handleChange = (section, field, value) => {
     setData((prev) => ({
@@ -137,6 +178,85 @@ const EditorForm = ({ data, setData, activeTab }) => {
         </section>
       )}
 
+      {activeTab === 'import' && (
+        <section className="animate-fadeIn">
+          <div className="text-center mb-8">
+            <div className="text-5xl mb-4">📥</div>
+            <h2 className="text-2xl font-bold text-gray-800 mb-2">Import dari Database Customer</h2>
+            <p className="text-gray-500 text-sm">Pilih customer dari database untuk otomatis mengisi data bisnis dan tema warna.</p>
+          </div>
+
+          {importSuccess && (
+            <div className="bg-green-50 border border-green-200 rounded-xl p-4 text-green-700 text-sm flex items-center space-x-2 mb-6">
+              <span>✅</span>
+              <span className="font-semibold">{importSuccess}</span>
+            </div>
+          )}
+
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="font-bold text-gray-700">Daftar Customer ({customers.length})</h3>
+            <button 
+              onClick={fetchCustomers} 
+              disabled={loadingCustomers}
+              className="text-sm bg-blue-50 text-blue-600 px-3 py-1.5 rounded-lg hover:bg-blue-100 transition-colors"
+            >
+              {loadingCustomers ? 'Memuat...' : 'Refresh'}
+            </button>
+          </div>
+
+          <div className="mb-4 relative">
+            <input 
+              type="text" 
+              placeholder="Cari nama bisnis, deskripsi..." 
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full border border-gray-300 rounded-lg py-2 pl-10 pr-4 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+            />
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">🔍</span>
+          </div>
+
+          <div className="space-y-3 max-h-[500px] overflow-y-auto pr-2">
+            {loadingCustomers && customers.length === 0 ? (
+              <div className="text-center py-8 text-gray-400">Loading data dari Firebase...</div>
+            ) : (() => {
+              const filteredCustomers = customers.filter(c => 
+                (c.businessName || c.name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+                (c.slogan || c.aboutUs || '').toLowerCase().includes(searchQuery.toLowerCase())
+              );
+              
+              if (filteredCustomers.length === 0) {
+                return <div className="text-center py-8 text-gray-400 border border-dashed border-gray-200 rounded-xl">{searchQuery ? 'Customer tidak ditemukan.' : 'Belum ada customer.'}</div>;
+              }
+
+              return filteredCustomers.map(customer => (
+                <div key={customer.id} className="p-4 bg-white border border-gray-200 rounded-xl flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 hover:border-blue-300 transition-colors shadow-sm">
+                  <div className="flex-1">
+                    <h4 className="font-bold text-gray-800">{customer.businessName || customer.name || 'Unnamed Customer'}</h4>
+                    <p className="text-xs text-gray-500 mt-1 line-clamp-1">{customer.slogan || customer.aboutUs || 'Tidak ada deskripsi'}</p>
+                    <div className="flex items-center gap-2 mt-2">
+                      <span className="text-[10px] bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">{customer.category || 'Uncategorized'}</span>
+                      {customer.primaryColor && (
+                        <div className="flex gap-1">
+                           <div className="w-3 h-3 rounded-full" style={{ backgroundColor: customer.primaryColor }}></div>
+                           <div className="w-3 h-3 rounded-full" style={{ backgroundColor: customer.secondaryColor }}></div>
+                           <div className="w-3 h-3 rounded-full" style={{ backgroundColor: customer.accentColor }}></div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => handleImportCustomer(customer)}
+                    className="shrink-0 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold py-2 px-4 rounded-lg shadow-sm transition-colors"
+                  >
+                    Import Data
+                  </button>
+                </div>
+              ));
+            })()}
+          </div>
+        </section>
+      )}
+
       {activeTab === 'business' && (
         <section className="animate-fadeIn">
           <h2 className="text-2xl font-bold text-gray-800 mb-6 border-b pb-4">Profil & Informasi Bisnis</h2>
@@ -237,12 +357,55 @@ const EditorForm = ({ data, setData, activeTab }) => {
         <section className="animate-fadeIn">
           <h2 className="text-2xl font-bold text-gray-800 mb-6 border-b pb-4">Lokasi & Kontak</h2>
           <div className="space-y-6">
-            <div><label className="block text-sm font-semibold mb-2">WhatsApp</label><input type="text" value={data.contact.whatsapp} onChange={(e) => handleChange('contact', 'whatsapp', e.target.value)} className="w-full border border-gray-300 rounded-md p-3" /></div>
+            <div><label className="block text-sm font-semibold mb-2">WhatsApp <span className="font-normal text-gray-400">(format: 628xxx)</span></label><input type="text" value={data.contact.whatsapp} onChange={(e) => handleChange('contact', 'whatsapp', e.target.value)} className="w-full border border-gray-300 rounded-md p-3" /></div>
             <div><label className="block text-sm font-semibold mb-2">Email</label><input type="text" value={data.contact.email} onChange={(e) => handleChange('contact', 'email', e.target.value)} className="w-full border border-gray-300 rounded-md p-3" /></div>
             <div><label className="block text-sm font-semibold mb-2">Alamat Lengkap</label><textarea value={data.contact.address} onChange={(e) => handleChange('contact', 'address', e.target.value)} className="w-full border border-gray-300 rounded-md p-3 h-24" /></div>
+            
+            {/* Maps URL */}
+            <div>
+              <label className="block text-sm font-semibold mb-2">
+                Google Maps Embed URL <span className="font-normal text-gray-400">(opsional)</span>
+              </label>
+              <input
+                type="text"
+                value={data.contact.mapsUrl || ''}
+                onChange={(e) => handleChange('contact', 'mapsUrl', e.target.value)}
+                placeholder="https://www.google.com/maps/embed?pb=..."
+                className="w-full border border-gray-300 rounded-md p-3 text-sm"
+              />
+              {/* Step-by-step guide */}
+              <div className="mt-3 bg-amber-50 border border-amber-200 rounded-xl p-4">
+                <p className="font-semibold text-amber-800 text-sm mb-2">📍 Cara mendapatkan URL Embed Maps:</p>
+                <ol className="text-xs text-amber-700 space-y-1 list-decimal list-inside">
+                  <li>Buka <a href="https://maps.google.com" target="_blank" rel="noreferrer" className="underline font-semibold">maps.google.com</a></li>
+                  <li>Cari nama bisnis atau alamat Anda</li>
+                  <li>Klik tombol <strong>Share</strong> (ikon bagikan)</li>
+                  <li>Pilih tab <strong>"Embed a map"</strong></li>
+                  <li>Klik <strong>"Copy HTML"</strong></li>
+                  <li>Dari kode yang dicopy, ambil hanya bagian URL-nya saja dari <code className="bg-amber-100 px-1 rounded">src="..."</code></li>
+                </ol>
+                <p className="text-xs text-amber-600 mt-2">Contoh: <code className="bg-amber-100 px-1 rounded break-all">https://www.google.com/maps/embed?pb=!1m18...</code></p>
+              </div>
+              {/* Preview */}
+              {data.contact.mapsUrl && (
+                <div className="mt-3">
+                  <p className="text-xs font-semibold text-gray-500 mb-1">Preview:</p>
+                  <iframe
+                    src={data.contact.mapsUrl}
+                    width="100%"
+                    height="200"
+                    style={{ border: 0, borderRadius: '8px' }}
+                    allowFullScreen=""
+                    loading="lazy"
+                    title="Maps Preview"
+                  />
+                </div>
+              )}
+            </div>
           </div>
         </section>
       )}
+
 
       {activeTab === 'services' && (
         <section className="animate-fadeIn">

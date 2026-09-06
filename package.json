@@ -10,8 +10,11 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "dotenv": "^17.4.2",
     "file-saver": "^2.0.5",
+    "firebase": "^12.18.0",
     "jszip": "^3.10.1",
+    "puppeteer": "^25.10.0",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
     "react-router-dom": "^7.18.3"
