@@ -177,7 +177,14 @@ const Template01 = ({ data }) => {
               <img
                 src={business.logoURL}
                 alt="Logo"
-                className="h-8 object-contain"
+                style={{
+                  width: "44px",
+                  height: "44px",
+                  borderRadius: "50%",
+                  objectFit: "cover",
+                  border: "2px solid rgba(255,255,255,0.25)",
+                  flexShrink: 0,
+                }}
               />
             )}
             <div className="font-bold text-xl">{business.name}</div>
