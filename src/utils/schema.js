@@ -63,7 +63,6 @@ export const defaultData = {
     address: "Jakarta, Indonesia",
     whatsapp: "6281234567890",
     email: "contact@sultans.id",
-    instagram: "sultans_id",
-    mapsUrl: "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d126920.24056262194!2d106.75880492652156!3d-6.229746497793164!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x2e69f3e945e34b9d%3A0x5371bf0fdad786a2!2sJakarta%2C%20Daerah%20Khusus%20Ibukota%20Jakarta!5e0!3m2!1sid!2sid!4v1709823456789!5m2!1sid!2sid"
+    instagram: "sultans_id"
   }
 };

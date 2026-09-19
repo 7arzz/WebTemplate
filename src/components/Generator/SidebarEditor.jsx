@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { generateWebsiteContent } from '../../utils/aiService';
+import { generateWebsiteContent, upgradeThemeColor } from '../../utils/aiService';
 import { collection, getDocs, query, orderBy } from 'firebase/firestore';
 import { db } from '../../utils/firebase';
 
@@ -12,6 +12,11 @@ const EditorForm = ({ data, setData, activeTab }) => {
   const [customers, setCustomers] = useState([]);
   const [loadingCustomers, setLoadingCustomers] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  // AI Color Upgrade states
+  const [colorUpgradeLoading, setColorUpgradeLoading] = useState(false);
+  const [colorUpgradeError, setColorUpgradeError] = useState('');
+  const [colorUpgradeResult, setColorUpgradeResult] = useState(null);
+  const [upgradingCustomerId, setUpgradingCustomerId] = useState(null);
 
   useEffect(() => {
     if (activeTab === 'import' && customers.length === 0) {
@@ -79,6 +84,42 @@ const EditorForm = ({ data, setData, activeTab }) => {
       newArray.splice(index, 1);
       return { ...prev, [section]: newArray };
     });
+  };
+
+  const handleColorUpgrade = async (contextOverride = null) => {
+    const ctx = contextOverride || {
+      businessName: data.business.name,
+      description: data.business.description,
+      services: data.services,
+    };
+    if (contextOverride?.customerId) {
+      setUpgradingCustomerId(contextOverride.customerId);
+    } else {
+      setColorUpgradeLoading(true);
+    }
+    setColorUpgradeError('');
+    setColorUpgradeResult(null);
+
+    const result = await upgradeThemeColor(ctx);
+
+    if (result.success) {
+      // Apply colors to theme immediately
+      setData(prev => ({
+        ...prev,
+        theme: {
+          ...prev.theme,
+          primaryColor: result.data.primaryColor,
+          secondaryColor: result.data.secondaryColor,
+          accentColor: result.data.accentColor,
+        }
+      }));
+      setColorUpgradeResult(result.data);
+    } else {
+      setColorUpgradeError(result.error || 'Gagal upgrade warna.');
+    }
+
+    setColorUpgradeLoading(false);
+    setUpgradingCustomerId(null);
   };
 
   const handleAiGenerate = async () => {
@@ -244,12 +285,33 @@ const EditorForm = ({ data, setData, activeTab }) => {
                       )}
                     </div>
                   </div>
-                  <button
-                    onClick={() => handleImportCustomer(customer)}
-                    className="shrink-0 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold py-2 px-4 rounded-lg shadow-sm transition-colors"
-                  >
-                    Import Data
-                  </button>
+                  <div className="flex flex-col gap-2 shrink-0">
+                    <button
+                      onClick={() => handleImportCustomer(customer)}
+                      className="bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold py-2 px-4 rounded-lg shadow-sm transition-colors"
+                    >
+                      Import Data
+                    </button>
+                    <button
+                      onClick={() => handleColorUpgrade({
+                        customerId: customer.id,
+                        businessName: customer.businessName || customer.name || '',
+                        description: customer.slogan || customer.aboutUs || '',
+                        services: data.services,
+                      })}
+                      disabled={upgradingCustomerId === customer.id}
+                      className="bg-gradient-to-r from-violet-500 to-fuchsia-500 hover:from-violet-600 hover:to-fuchsia-600 disabled:opacity-50 disabled:cursor-wait text-white text-xs font-semibold py-1.5 px-3 rounded-lg shadow-sm transition-all flex items-center justify-center gap-1.5"
+                    >
+                      {upgradingCustomerId === customer.id ? (
+                        <>
+                          <svg className="animate-spin h-3 w-3" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"/></svg>
+                          <span>Analyzing...</span>
+                        </>
+                      ) : (
+                        <><span>✨</span><span>AI Upgrade Warna</span></>
+                      )}
+                    </button>
+                  </div>
                 </div>
               ));
             })()}
@@ -284,13 +346,109 @@ const EditorForm = ({ data, setData, activeTab }) => {
       {activeTab === 'theme' && (
         <section className="animate-fadeIn">
           <h2 className="text-2xl font-bold text-gray-800 mb-6 border-b pb-4">Theme & Colors</h2>
-          
+
+          {/* AI Color Upgrade Panel */}
+          <div className="mb-6 p-5 rounded-2xl border border-violet-200 bg-gradient-to-br from-violet-50 to-fuchsia-50">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <h3 className="font-bold text-violet-800 text-sm flex items-center gap-2">✨ AI Color Upgrade</h3>
+                <p className="text-xs text-violet-600 mt-1">Biarkan AI memilihkan palet warna terbaik berdasarkan profil bisnis Anda saat ini.</p>
+              </div>
+              <button
+                onClick={() => handleColorUpgrade()}
+                disabled={colorUpgradeLoading}
+                className="shrink-0 bg-gradient-to-r from-violet-500 to-fuchsia-500 hover:from-violet-600 hover:to-fuchsia-600 disabled:opacity-50 disabled:cursor-wait text-white text-sm font-bold py-2.5 px-5 rounded-xl shadow-md hover:shadow-lg transition-all flex items-center gap-2"
+              >
+                {colorUpgradeLoading ? (
+                  <>
+                    <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"/></svg>
+                    <span>AI Menganalisis...</span>
+                  </>
+                ) : (
+                  <><span>✨</span><span>Upgrade Sekarang</span></>
+                )}
+              </button>
+            </div>
+
+            {colorUpgradeError && (
+              <div className="mt-3 bg-red-50 border border-red-200 rounded-lg p-3 text-red-700 text-xs flex items-center gap-2">
+                <span>❌</span><span>{colorUpgradeError}</span>
+              </div>
+            )}
+
+            {colorUpgradeResult && (
+              <div className="mt-4 bg-white rounded-xl border border-violet-100 p-4 shadow-sm">
+                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">Warna yang Diterapkan AI</p>
+                <div className="flex gap-3 mb-3">
+                  <div className="flex-1 rounded-lg overflow-hidden shadow-sm border border-gray-100">
+                    <div className="h-12" style={{ backgroundColor: colorUpgradeResult.primaryColor }}></div>
+                    <div className="p-2 bg-white">
+                      <p className="text-[10px] font-semibold text-gray-500">Primary</p>
+                      <p className="text-xs font-mono font-bold text-gray-800">{colorUpgradeResult.primaryColor}</p>
+                    </div>
+                  </div>
+                  <div className="flex-1 rounded-lg overflow-hidden shadow-sm border border-gray-100">
+                    <div className="h-12" style={{ backgroundColor: colorUpgradeResult.secondaryColor }}></div>
+                    <div className="p-2 bg-white">
+                      <p className="text-[10px] font-semibold text-gray-500">Secondary</p>
+                      <p className="text-xs font-mono font-bold text-gray-800">{colorUpgradeResult.secondaryColor}</p>
+                    </div>
+                  </div>
+                  <div className="flex-1 rounded-lg overflow-hidden shadow-sm border border-gray-100">
+                    <div className="h-12" style={{ backgroundColor: colorUpgradeResult.accentColor }}></div>
+                    <div className="p-2 bg-white">
+                      <p className="text-[10px] font-semibold text-gray-500">Accent</p>
+                      <p className="text-xs font-mono font-bold text-gray-800">{colorUpgradeResult.accentColor}</p>
+                    </div>
+                  </div>
+                </div>
+                {colorUpgradeResult.reason && (
+                  <div className="bg-violet-50 rounded-lg p-3 border border-violet-100">
+                    <p className="text-[11px] text-violet-700"><span className="font-bold">💡 Alasan AI:</span> {colorUpgradeResult.reason}</p>
+                  </div>
+                )}
+                <div className="flex gap-2 mt-3">
+                  <button
+                    onClick={() => handleColorUpgrade()}
+                    className="flex-1 py-2 text-xs font-semibold border border-violet-300 text-violet-700 rounded-lg hover:bg-violet-50 transition-colors"
+                  >
+                    🔄 Coba Warna Lain
+                  </button>
+                  <button
+                    onClick={() => setColorUpgradeResult(null)}
+                    className="py-2 px-3 text-xs font-semibold border border-gray-200 text-gray-500 rounded-lg hover:bg-gray-50 transition-colors"
+                  >
+                    ✕ Tutup
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+
           <div className="mb-6 p-4 rounded-xl border border-blue-100 bg-blue-50/50">
             <h3 className="font-bold text-blue-800 mb-4 text-sm uppercase tracking-wider">Warna Global (Default)</h3>
             <div className="grid grid-cols-3 gap-4">
-              <div><label className="block text-xs font-semibold mb-2">Primary</label><input type="color" className="w-full h-10 rounded cursor-pointer" value={data.theme.primaryColor} onChange={(e) => handleChange('theme', 'primaryColor', e.target.value)} /></div>
-              <div><label className="block text-xs font-semibold mb-2">Secondary</label><input type="color" className="w-full h-10 rounded cursor-pointer" value={data.theme.secondaryColor} onChange={(e) => handleChange('theme', 'secondaryColor', e.target.value)} /></div>
-              <div><label className="block text-xs font-semibold mb-2">Accent</label><input type="color" className="w-full h-10 rounded cursor-pointer" value={data.theme.accentColor} onChange={(e) => handleChange('theme', 'accentColor', e.target.value)} /></div>
+              <div>
+                <label className="block text-xs font-semibold mb-2">Primary</label>
+                <div className="flex items-center space-x-2">
+                  <input type="color" className="w-8 h-8 rounded cursor-pointer shrink-0" value={data.theme.primaryColor} onChange={(e) => handleChange('theme', 'primaryColor', e.target.value)} />
+                  <input type="text" className="w-full text-xs border border-gray-300 rounded p-1 uppercase" value={data.theme.primaryColor} onChange={(e) => handleChange('theme', 'primaryColor', e.target.value)} />
+                </div>
+              </div>
+              <div>
+                <label className="block text-xs font-semibold mb-2">Secondary</label>
+                <div className="flex items-center space-x-2">
+                  <input type="color" className="w-8 h-8 rounded cursor-pointer shrink-0" value={data.theme.secondaryColor} onChange={(e) => handleChange('theme', 'secondaryColor', e.target.value)} />
+                  <input type="text" className="w-full text-xs border border-gray-300 rounded p-1 uppercase" value={data.theme.secondaryColor} onChange={(e) => handleChange('theme', 'secondaryColor', e.target.value)} />
+                </div>
+              </div>
+              <div>
+                <label className="block text-xs font-semibold mb-2">Accent</label>
+                <div className="flex items-center space-x-2">
+                  <input type="color" className="w-8 h-8 rounded cursor-pointer shrink-0" value={data.theme.accentColor} onChange={(e) => handleChange('theme', 'accentColor', e.target.value)} />
+                  <input type="text" className="w-full text-xs border border-gray-300 rounded p-1 uppercase" value={data.theme.accentColor} onChange={(e) => handleChange('theme', 'accentColor', e.target.value)} />
+                </div>
+              </div>
             </div>
           </div>
 
@@ -324,11 +482,13 @@ const EditorForm = ({ data, setData, activeTab }) => {
                     <div className="flex space-x-4">
                       <div className="flex flex-col items-center">
                         <span className="text-[9px] text-gray-500 mb-1 font-semibold uppercase">Bagian BG</span>
-                        <input type="color" className="w-8 h-8 rounded cursor-pointer border-0 p-0" value={data.theme[`${sec.id}Bg`] || defaultBg} onChange={(e) => handleChange('theme', `${sec.id}Bg`, e.target.value)} />
+                        <input type="color" className="w-8 h-8 rounded cursor-pointer border-0 p-0 mb-1 shrink-0" value={data.theme[`${sec.id}Bg`] || defaultBg} onChange={(e) => handleChange('theme', `${sec.id}Bg`, e.target.value)} />
+                        <input type="text" className="w-14 text-[10px] text-center border border-gray-200 rounded p-0.5 uppercase" value={data.theme[`${sec.id}Bg`] || defaultBg} onChange={(e) => handleChange('theme', `${sec.id}Bg`, e.target.value)} />
                       </div>
                       <div className="flex flex-col items-center">
                         <span className="text-[9px] text-gray-500 mb-1 font-semibold uppercase">Bagian Teks</span>
-                        <input type="color" className="w-8 h-8 rounded cursor-pointer border-0 p-0" value={data.theme[`${sec.id}Text`] || defaultText} onChange={(e) => handleChange('theme', `${sec.id}Text`, e.target.value)} />
+                        <input type="color" className="w-8 h-8 rounded cursor-pointer border-0 p-0 mb-1 shrink-0" value={data.theme[`${sec.id}Text`] || defaultText} onChange={(e) => handleChange('theme', `${sec.id}Text`, e.target.value)} />
+                        <input type="text" className="w-14 text-[10px] text-center border border-gray-200 rounded p-0.5 uppercase" value={data.theme[`${sec.id}Text`] || defaultText} onChange={(e) => handleChange('theme', `${sec.id}Text`, e.target.value)} />
                       </div>
                     </div>
 
@@ -337,11 +497,13 @@ const EditorForm = ({ data, setData, activeTab }) => {
                       <div className="flex space-x-4 border-l pl-4">
                         <div className="flex flex-col items-center">
                           <span className="text-[9px] text-blue-500 mb-1 font-semibold uppercase">Tombol BG</span>
-                          <input type="color" className="w-8 h-8 rounded cursor-pointer border-0 p-0" value={data.theme[`${sec.id}BtnBg`] || data.theme[`${sec.id}Text`] || defaultBtnBg} onChange={(e) => handleChange('theme', `${sec.id}BtnBg`, e.target.value)} />
+                          <input type="color" className="w-8 h-8 rounded cursor-pointer border-0 p-0 mb-1 shrink-0" value={data.theme[`${sec.id}BtnBg`] || data.theme[`${sec.id}Text`] || defaultBtnBg} onChange={(e) => handleChange('theme', `${sec.id}BtnBg`, e.target.value)} />
+                          <input type="text" className="w-14 text-[10px] text-center border border-gray-200 rounded p-0.5 uppercase" value={data.theme[`${sec.id}BtnBg`] || data.theme[`${sec.id}Text`] || defaultBtnBg} onChange={(e) => handleChange('theme', `${sec.id}BtnBg`, e.target.value)} />
                         </div>
                         <div className="flex flex-col items-center">
                           <span className="text-[9px] text-blue-500 mb-1 font-semibold uppercase">Tombol Teks</span>
-                          <input type="color" className="w-8 h-8 rounded cursor-pointer border-0 p-0" value={data.theme[`${sec.id}BtnText`] || data.theme[`${sec.id}Bg`] || defaultBtnText} onChange={(e) => handleChange('theme', `${sec.id}BtnText`, e.target.value)} />
+                          <input type="color" className="w-8 h-8 rounded cursor-pointer border-0 p-0 mb-1 shrink-0" value={data.theme[`${sec.id}BtnText`] || data.theme[`${sec.id}Bg`] || defaultBtnText} onChange={(e) => handleChange('theme', `${sec.id}BtnText`, e.target.value)} />
+                          <input type="text" className="w-14 text-[10px] text-center border border-gray-200 rounded p-0.5 uppercase" value={data.theme[`${sec.id}BtnText`] || data.theme[`${sec.id}Bg`] || defaultBtnText} onChange={(e) => handleChange('theme', `${sec.id}BtnText`, e.target.value)} />
                         </div>
                       </div>
                     )}

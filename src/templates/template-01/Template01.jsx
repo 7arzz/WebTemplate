@@ -1,17 +1,88 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
+import { gsap } from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
 
 const Template01 = ({ data }) => {
   const { business, theme, services, portfolio, testimonials, contact } = data;
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [activeTestimonial, setActiveTestimonial] = useState(0);
+  const [activeFilter, setActiveFilter] = useState("Semua");
   const [bookingForm, setBookingForm] = useState({
     name: "",
     service: "",
     notes: "",
   });
   const [showIntro, setShowIntro] = useState(() => {
-    return !sessionStorage.getItem("7arzz_intro_shown");
+    if (typeof window !== "undefined") {
+      return !sessionStorage.getItem("7arzz_intro_shown");
+    }
+    return false;
   });
+
+  const heroImageRef = useRef(null);
+  const heroSectionRef = useRef(null);
+  const heroTextRef = useRef(null);
+  const heroDescRef = useRef(null);
+  const btnGroupRef = useRef(null);
+  const magneticBtnRef = useRef(null);
+
+  useEffect(() => {
+    // Initialize GSAP ScrollTrigger
+    gsap.registerPlugin(ScrollTrigger);
+
+    // Text Reveal Animation
+    if (heroTextRef.current && heroDescRef.current && btnGroupRef.current) {
+      gsap.fromTo(
+        [heroTextRef.current, heroDescRef.current, btnGroupRef.current],
+        { y: 40, opacity: 0 },
+        { y: 0, opacity: 1, duration: 1.2, stagger: 0.2, ease: "power3.out", delay: 0.3 }
+      );
+    }
+
+    // Magnetic Button Logic
+    const magneticBtn = magneticBtnRef.current;
+    let handleMouseMove, handleMouseLeave;
+    if (magneticBtn) {
+      handleMouseMove = (e) => {
+        const rect = magneticBtn.getBoundingClientRect();
+        const x = (e.clientX - rect.left - rect.width / 2) * 0.4;
+        const y = (e.clientY - rect.top - rect.height / 2) * 0.4;
+        gsap.to(magneticBtn, { x, y, duration: 0.3, ease: "power2.out" });
+      };
+      handleMouseLeave = () => {
+        gsap.to(magneticBtn, { x: 0, y: 0, duration: 0.7, ease: "elastic.out(1, 0.3)" });
+      };
+      magneticBtn.addEventListener("mousemove", handleMouseMove);
+      magneticBtn.addEventListener("mouseleave", handleMouseLeave);
+    }
+
+    if (heroImageRef.current && heroSectionRef.current) {
+      // Cinematic zoom-out & parallax on scroll for hero image
+      gsap.fromTo(
+        heroImageRef.current,
+        { scale: 1.15, y: 0 },
+        {
+          scale: 1,
+          y: "15%",
+          ease: "none",
+          scrollTrigger: {
+            trigger: heroSectionRef.current,
+            start: "top top",
+            end: "bottom top",
+            scrub: true,
+          },
+        }
+      );
+    }
+    
+    return () => {
+      ScrollTrigger.getAll().forEach(t => t.kill());
+      if (magneticBtn) {
+        magneticBtn.removeEventListener("mousemove", handleMouseMove);
+        magneticBtn.removeEventListener("mouseleave", handleMouseLeave);
+      }
+    };
+  }, []);
 
   const dismissIntro = () => {
     sessionStorage.setItem("7arzz_intro_shown", "1");
@@ -22,6 +93,28 @@ const Template01 = ({ data }) => {
     const message = `Halo, saya ingin booking layanan.\n\nNama: ${bookingForm.name}\nLayanan: ${bookingForm.service}\nCatatan: ${bookingForm.notes}`;
     const waUrl = `https://wa.me/${contact.whatsapp}?text=${encodeURIComponent(message)}`;
     window.open(waUrl, "_blank");
+  };
+
+  // Auto-generate Google Maps embed URL dari alamat teks atau URL apapun
+  const getMapEmbedUrl = (addressOrUrl) => {
+    if (!addressOrUrl) return null;
+    // Kalau sudah format embed langsung pakai
+    if (addressOrUrl.includes('/maps/embed')) return addressOrUrl;
+    // Kalau URL Google Maps biasa (place/search/goo.gl) → konversi ke embed via search query
+    if (
+      addressOrUrl.startsWith('http') &&
+      (addressOrUrl.includes('google.com/maps') || addressOrUrl.includes('maps.app.goo.gl') || addressOrUrl.includes('goo.gl/maps'))
+    ) {
+      // Ekstrak query dari URL jika ada
+      try {
+        const url = new URL(addressOrUrl);
+        const q = url.searchParams.get('q') || url.pathname.replace('/maps/place/', '').replace('/maps/search/', '');
+        if (q) return `https://maps.google.com/maps?q=${encodeURIComponent(decodeURIComponent(q))}&output=embed&hl=id`;
+      } catch (_) {}
+      return `https://maps.google.com/maps?q=${encodeURIComponent(addressOrUrl)}&output=embed&hl=id`;
+    }
+    // Alamat teks biasa → langsung jadikan query
+    return `https://maps.google.com/maps?q=${encodeURIComponent(addressOrUrl)}&output=embed&hl=id`;
   };
 
   const getStyle = (secId, defaultBg, defaultText) => ({
@@ -35,48 +128,20 @@ const Template01 = ({ data }) => {
     color: theme[`${secId}BtnText`] || theme[`${secId}Bg`] || defaultBg,
   });
 
-  const navbarStyle = getStyle(
-    "navbar",
-    theme.primaryColor,
-    theme.secondaryColor,
-  );
+  const navbarStyle = getStyle("navbar", theme.primaryColor, theme.secondaryColor);
   const heroStyle = getStyle("hero", theme.primaryColor, theme.secondaryColor);
-  const aboutStyle = getStyle(
-    "about",
-    theme.secondaryColor,
-    theme.primaryColor,
-  );
-  const servicesStyle = getStyle(
-    "services",
-    theme.secondaryColor,
-    theme.primaryColor,
-  );
-  const portfolioStyle = getStyle(
-    "portfolio",
-    theme.secondaryColor,
-    theme.primaryColor,
-  );
-  const testimonialsStyle = getStyle(
-    "testimonials",
-    theme.primaryColor,
-    theme.secondaryColor,
-  );
-  const bookingStyle = getStyle(
-    "booking",
-    theme.secondaryColor,
-    theme.primaryColor,
-  );
-  const footerStyle = getStyle(
-    "footer",
-    theme.primaryColor,
-    theme.secondaryColor,
-  );
+  const aboutStyle = getStyle("about", theme.secondaryColor, theme.primaryColor);
+  const servicesStyle = getStyle("services", theme.secondaryColor, theme.primaryColor);
+  const portfolioStyle = getStyle("portfolio", theme.secondaryColor, theme.primaryColor);
+  const testimonialsStyle = getStyle("testimonials", theme.primaryColor, theme.secondaryColor);
+  const bookingStyle = getStyle("booking", theme.secondaryColor, theme.primaryColor);
+  const footerStyle = getStyle("footer", theme.primaryColor, theme.secondaryColor);
 
   const textAccent = { color: theme.accentColor };
 
   return (
     <div
-      className="font-sans w-full transition-colors duration-300"
+      className="font-sans w-full transition-colors duration-300 selection:bg-black selection:text-white overflow-x-hidden"
       style={aboutStyle}
     >
       {/* ── 7arzz Intro Popup ── */}
@@ -150,11 +215,13 @@ const Template01 = ({ data }) => {
                 fontWeight: 700,
                 fontSize: "15px",
                 cursor: "pointer",
-                transition: "opacity 0.2s",
+                transition: "all 0.2s",
                 width: "100%",
               }}
               onMouseEnter={(e) => (e.target.style.opacity = "0.85")}
               onMouseLeave={(e) => (e.target.style.opacity = "1")}
+              onMouseDown={(e) => (e.target.style.transform = "scale(0.98)")}
+              onMouseUp={(e) => (e.target.style.transform = "scale(1)")}
             >
               Masuk ke Website →
             </button>
@@ -168,7 +235,7 @@ const Template01 = ({ data }) => {
       )}
 
       <nav
-        className="p-4 sticky top-0 z-50 shadow-sm transition-colors duration-300"
+        className="px-6 py-4 sticky top-0 z-50 border-b border-opacity-10 border-current backdrop-blur-md"
         style={navbarStyle}
       >
         <div className="max-w-7xl mx-auto flex justify-between items-center relative z-50">
@@ -177,59 +244,21 @@ const Template01 = ({ data }) => {
               <img
                 src={business.logoURL}
                 alt="Logo"
-                style={{
-                  width: "44px",
-                  height: "44px",
-                  borderRadius: "50%",
-                  objectFit: "cover",
-                  border: "2px solid rgba(255,255,255,0.25)",
-                  flexShrink: 0,
-                }}
+                className="w-10 h-10 object-cover rounded-full"
               />
             )}
-            <div className="font-bold text-xl">{business.name}</div>
+            <div className="font-bold text-xl tracking-tight">{business.name}</div>
           </div>
 
           {/* Desktop Menu */}
-          <div className="hidden md:flex space-x-6 text-sm font-medium items-center">
-            <a
-              href="#beranda"
-              className="opacity-80 hover:opacity-100 transition-opacity"
-            >
-              Beranda
-            </a>
-            <a
-              href="#tentang-kami"
-              className="opacity-80 hover:opacity-100 transition-opacity"
-            >
-              Tentang Kami
-            </a>
-            <a
-              href="#layanan"
-              className="opacity-80 hover:opacity-100 transition-opacity"
-            >
-              Layanan
-            </a>
-            <a
-              href="#portofolio"
-              className="opacity-80 hover:opacity-100 transition-opacity"
-            >
-              Portofolio
-            </a>
-            <a
-              href="#testimoni"
-              className="opacity-80 hover:opacity-100 transition-opacity"
-            >
-              Testimoni
-            </a>
+          <div className="hidden md:flex space-x-8 text-sm font-medium items-center">
+            <a href="#tentang-kami" className="opacity-60 hover:opacity-100 transition-opacity">Tentang</a>
+            <a href="#layanan" className="opacity-60 hover:opacity-100 transition-opacity">Layanan</a>
+            <a href="#portofolio" className="opacity-60 hover:opacity-100 transition-opacity">Portofolio</a>
             <a
               href="#booking"
-              className="px-4 py-2 rounded font-semibold transition-transform hover:scale-105 shadow-sm"
-              style={getBtnStyle(
-                "navbar",
-                theme.primaryColor,
-                theme.secondaryColor,
-              )}
+              className="px-5 py-2.5 rounded-full font-semibold transition-all active:scale-[0.98]"
+              style={getBtnStyle("navbar", theme.primaryColor, theme.secondaryColor)}
             >
               Booking
             </a>
@@ -237,29 +266,14 @@ const Template01 = ({ data }) => {
 
           {/* Mobile Hamburger Icon */}
           <button
-            className="md:hidden p-2 focus:outline-none"
+            className="md:hidden p-2 focus:outline-none opacity-60 hover:opacity-100"
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
           >
-            <svg
-              className="w-6 h-6"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               {isMobileMenuOpen ? (
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M6 18L18 6M6 6l12 12"
-                />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M6 18L18 6M6 6l12 12" />
               ) : (
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M4 6h16M4 12h16M4 18h16"
-                />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 8h16M4 16h16" />
               )}
             </svg>
           </button>
@@ -267,55 +281,16 @@ const Template01 = ({ data }) => {
 
         {/* Mobile Menu Dropdown */}
         {isMobileMenuOpen && (
-          <div
-            className="md:hidden absolute top-full left-0 w-full shadow-lg border-t border-opacity-10 z-40"
-            style={navbarStyle}
-          >
-            <div className="flex flex-col p-4 space-y-4 text-center font-medium">
-              <a
-                href="#beranda"
-                onClick={() => setIsMobileMenuOpen(false)}
-                className="opacity-80 hover:opacity-100"
-              >
-                Beranda
-              </a>
-              <a
-                href="#tentang-kami"
-                onClick={() => setIsMobileMenuOpen(false)}
-                className="opacity-80 hover:opacity-100"
-              >
-                Tentang Kami
-              </a>
-              <a
-                href="#layanan"
-                onClick={() => setIsMobileMenuOpen(false)}
-                className="opacity-80 hover:opacity-100"
-              >
-                Layanan
-              </a>
-              <a
-                href="#portofolio"
-                onClick={() => setIsMobileMenuOpen(false)}
-                className="opacity-80 hover:opacity-100"
-              >
-                Portofolio
-              </a>
-              <a
-                href="#testimoni"
-                onClick={() => setIsMobileMenuOpen(false)}
-                className="opacity-80 hover:opacity-100"
-              >
-                Testimoni
-              </a>
+          <div className="md:hidden absolute top-full left-0 w-full shadow-2xl border-t border-opacity-10 z-40 p-6" style={navbarStyle}>
+            <div className="flex flex-col space-y-6 text-lg font-medium">
+              <a href="#tentang-kami" onClick={() => setIsMobileMenuOpen(false)} className="opacity-80 hover:opacity-100">Tentang</a>
+              <a href="#layanan" onClick={() => setIsMobileMenuOpen(false)} className="opacity-80 hover:opacity-100">Layanan</a>
+              <a href="#portofolio" onClick={() => setIsMobileMenuOpen(false)} className="opacity-80 hover:opacity-100">Portofolio</a>
               <a
                 href="#booking"
                 onClick={() => setIsMobileMenuOpen(false)}
-                className="px-4 py-3 rounded font-semibold mx-auto w-3/4 shadow-sm"
-                style={getBtnStyle(
-                  "navbar",
-                  theme.primaryColor,
-                  theme.secondaryColor,
-                )}
+                className="px-6 py-4 rounded-xl font-semibold text-center transition-transform active:scale-[0.98]"
+                style={getBtnStyle("navbar", theme.primaryColor, theme.secondaryColor)}
               >
                 Booking
               </a>
@@ -324,309 +299,199 @@ const Template01 = ({ data }) => {
         )}
       </nav>
 
-      <main className="overflow-x-hidden">
-        {/* Hero Section */}
+      <main>
+        {/* Hero Section: Left-aligned, limited width, strong typography */}
         <section
           id="beranda"
-          className="py-32 px-4 text-center transition-colors duration-300"
+          ref={heroSectionRef}
+          className="pt-24 pb-20 px-6 lg:px-12 flex items-center min-h-[90vh] overflow-hidden relative"
           style={heroStyle}
         >
-          <h1 className="text-4xl md:text-6xl font-bold mb-4 max-w-4xl mx-auto leading-tight">
-            Wujudkan Pernikahan
-            <br />
-            terbaik
-            <br />
-            <span style={textAccent}>anda dengan kami</span>
-          </h1>
-          <p className="mb-10 max-w-2xl mx-auto opacity-80 text-lg">
-            {business.description || "lorem ipsum dolor sit amet 7arzz"}
-          </p>
-          <div className="flex justify-center space-x-4 flex-wrap gap-y-4">
-            <a
-              href={`https://wa.me/${contact.whatsapp}?text=Halo,%20saya%20tertarik%20dengan%20layanan%20${encodeURIComponent(business.name)}`}
-              className="py-3 px-8 rounded font-semibold hover:opacity-90 transition-opacity"
-              style={getBtnStyle(
-                "hero",
-                theme.primaryColor,
-                theme.secondaryColor,
-              )}
-              target="_blank"
-              rel="noreferrer"
+          {/* Subtle Floating Particles */}
+          <div className="absolute inset-0 overflow-hidden pointer-events-none opacity-40">
+            {[...Array(15)].map((_, i) => (
+              <div
+                key={i}
+                className="absolute rounded-full"
+                style={{
+                  backgroundColor: heroStyle.color || "white",
+                  width: Math.random() * 4 + 2 + "px",
+                  height: Math.random() * 4 + 2 + "px",
+                  top: Math.random() * 100 + "%",
+                  left: Math.random() * 100 + "%",
+                  opacity: Math.random() * 0.5 + 0.2,
+                  animation: `floatUp ${Math.random() * 5 + 5}s linear infinite`,
+                  animationDelay: `-${Math.random() * 5}s`,
+                }}
+              />
+            ))}
+          </div>
+          <style>{`
+            @keyframes floatUp {
+              0% { transform: translateY(0) scale(1); opacity: 0; }
+              20% { opacity: 0.8; }
+              80% { opacity: 0.8; }
+              100% { transform: translateY(-100px) scale(0.5); opacity: 0; }
+            }
+          `}</style>
+
+          <div className="max-w-7xl mx-auto w-full grid md:grid-cols-12 gap-12 items-center relative z-10">
+            <div className="md:col-span-7 space-y-8">
+              <h1 
+                className="text-5xl md:text-7xl font-semibold tracking-tighter leading-[1.1] max-w-2xl"
+                ref={heroTextRef}
+                style={{ opacity: 0 }}
+              >
+                Wujudkan Pernikahan
+                <br />
+                <span className="italic font-light opacity-90" style={textAccent}>terbaik anda</span> dengan kami.
+              </h1>
+              <p 
+                className="max-w-lg opacity-70 text-lg md:text-xl leading-relaxed"
+                ref={heroDescRef}
+                style={{ opacity: 0 }}
+              >
+                {business.description || "Kami membantu merancang dan mengeksekusi momen paling berharga dalam hidup Anda dengan presisi dan keindahan."}
+              </p>
+              <div 
+                className="flex flex-wrap items-center gap-4 pt-4"
+                ref={btnGroupRef}
+                style={{ opacity: 0 }}
+              >
+                <div ref={magneticBtnRef} className="inline-block">
+                  <a
+                    href={`https://wa.me/${contact.whatsapp}?text=Halo,%20saya%20tertarik%20dengan%20layanan%20${encodeURIComponent(business.name)}`}
+                    className="px-8 py-4 rounded-full font-semibold transition-all active:scale-[0.98] whitespace-nowrap block"
+                    style={getBtnStyle("hero", theme.primaryColor, theme.secondaryColor)}
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    Konsultasi Gratis
+                  </a>
+                </div>
+                <a
+                  href="#layanan"
+                  className="px-8 py-4 rounded-full font-semibold transition-all active:scale-[0.98] whitespace-nowrap opacity-80 hover:opacity-100"
+                  style={{
+                    backgroundColor: "transparent",
+                    color: heroStyle.color,
+                    border: `1px solid ${heroStyle.color}`,
+                  }}
+                >
+                  Lihat Layanan
+                </a>
+              </div>
+            </div>
+            
+            {/* Right side visual placeholder/asset */}
+            <div 
+              className="md:col-span-5 h-[600px] rounded-3xl overflow-hidden relative"
+             
+             
             >
-              Konsultasi
-            </a>
-            <a
-              href="#layanan"
-              className="py-3 px-8 rounded font-semibold hover:opacity-80 transition-opacity"
-              style={{
-                backgroundColor: "transparent",
-                color: heroStyle.color,
-                border: `1px solid ${heroStyle.color}`,
-              }}
-            >
-              Lihat Layanan
-            </a>
+                {/* Fallback image if no specific hero image, using a placeholder from unsplash focused on aesthetic wedding/event */}
+                <img 
+                  ref={heroImageRef}
+                  src="https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&q=80" 
+                  alt="Wedding" 
+                  className="w-full h-full object-cover origin-center" 
+                />
+            </div>
           </div>
         </section>
 
-        {/* Tentang Kami */}
-        <section id="tentang-kami" className="py-24 px-4" style={aboutStyle}>
+        {/* Tentang Kami: Editorial Layout */}
+        <section id="tentang-kami" className="py-24 px-6 lg:px-12 border-t border-opacity-10 border-current" style={aboutStyle}>
           <div className="max-w-7xl mx-auto">
-            <div className="text-center mb-12">
-              <h2 className="text-4xl md:text-5xl font-extrabold mb-4">
-                Tentang Kami
-              </h2>
-              <div
-                className="w-24 h-1 mx-auto rounded"
-                style={{ backgroundColor: aboutStyle.color, opacity: 0.2 }}
-              ></div>
-            </div>
-
-            <div className="text-xl md:text-2xl leading-relaxed text-center max-w-4xl mx-auto mb-16 opacity-90 font-medium">
-              "{business.about}"
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl mx-auto">
-              {/* Visi */}
-              <div
-                className="p-8 rounded-2xl border border-opacity-10 hover:shadow-xl transition-all duration-300"
-                style={{
-                  borderColor: aboutStyle.color,
-                  backgroundColor: "rgba(255,255,255,0.05)",
-                }}
-              >
-                <div className="flex items-center mb-6">
-                  <div
-                    className="w-14 h-14 rounded-full flex items-center justify-center mr-4"
-                    style={getBtnStyle(
-                      "about",
-                      theme.secondaryColor,
-                      theme.primaryColor,
-                    )}
-                  >
-                    <svg
-                      className="w-7 h-7"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="2"
-                        d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-                      ></path>
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="2"
-                        d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
-                      ></path>
-                    </svg>
-                  </div>
-                  <h3 className="text-3xl font-bold">Visi</h3>
+            <div className="grid lg:grid-cols-12 gap-16 items-start">
+              <div className="lg:col-span-5">
+                <h2 className="text-4xl md:text-5xl font-semibold tracking-tighter mb-8">Tentang Kami</h2>
+                <div className="text-xl md:text-2xl leading-relaxed opacity-90 font-medium">
+                  {business.about}
                 </div>
-                <p className="opacity-80 text-lg leading-relaxed">
-                  Menjadi manajemen pilihan utama di Indonesia yang
-                  menginspirasi inovasi dan memberikan nilai tambah optimal bagi
-                  setiap mitra.
-                </p>
               </div>
-
-              {/* Misi */}
-              <div
-                className="p-8 rounded-2xl border border-opacity-10 hover:shadow-xl transition-all duration-300"
-                style={{
-                  borderColor: aboutStyle.color,
-                  backgroundColor: "rgba(255,255,255,0.05)",
-                }}
-              >
-                <div className="flex items-center mb-6">
-                  <div
-                    className="w-14 h-14 rounded-full flex items-center justify-center mr-4"
-                    style={getBtnStyle(
-                      "about",
-                      theme.secondaryColor,
-                      theme.primaryColor,
-                    )}
-                  >
-                    <svg
-                      className="w-7 h-7"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="2"
-                        d="M13 10V3L4 14h7v7l9-11h-7z"
-                      ></path>
-                    </svg>
-                  </div>
-                  <h3 className="text-3xl font-bold">Misi</h3>
+              
+              <div className="lg:col-span-7 grid sm:grid-cols-2 gap-8">
+                {/* Visi */}
+                <div className="border-t border-opacity-20 pt-6" style={{ borderColor: aboutStyle.color }}>
+                  <h3 className="text-xl font-bold mb-4 flex items-center gap-3">
+                    <span className="w-2 h-2 rounded-full" style={{ backgroundColor: theme.accentColor }}></span>
+                    Visi
+                  </h3>
+                  <p className="opacity-70 leading-relaxed text-base">
+                    Menjadi manajemen pilihan utama di Indonesia yang
+                    menginspirasi inovasi dan memberikan nilai tambah optimal bagi
+                    setiap mitra.
+                  </p>
                 </div>
-                <ul className="space-y-4 opacity-80 text-lg">
-                  <li className="flex items-start">
-                    <svg
-                      className="w-6 h-6 mr-3 flex-shrink-0 mt-0.5"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                      style={{ color: aboutStyle.color }}
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="2"
-                        d="M5 13l4 4L19 7"
-                      ></path>
-                    </svg>
-                    <span>Memberikan pelayanan ekselen dan terpercaya.</span>
-                  </li>
-                  <li className="flex items-start">
-                    <svg
-                      className="w-6 h-6 mr-3 flex-shrink-0 mt-0.5"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                      style={{ color: aboutStyle.color }}
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="2"
-                        d="M5 13l4 4L19 7"
-                      ></path>
-                    </svg>
-                    <span>Mengembangkan talenta kreatif dan profesional.</span>
-                  </li>
-                  <li className="flex items-start">
-                    <svg
-                      className="w-6 h-6 mr-3 flex-shrink-0 mt-0.5"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                      style={{ color: aboutStyle.color }}
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="2"
-                        d="M5 13l4 4L19 7"
-                      ></path>
-                    </svg>
-                    <span>
-                      Menciptakan ekosistem bisnis yang berkelanjutan.
-                    </span>
-                  </li>
-                </ul>
+
+                {/* Misi */}
+                <div className="border-t border-opacity-20 pt-6" style={{ borderColor: aboutStyle.color }}>
+                  <h3 className="text-xl font-bold mb-4 flex items-center gap-3">
+                    <span className="w-2 h-2 rounded-full" style={{ backgroundColor: theme.accentColor }}></span>
+                    Misi
+                  </h3>
+                  <ul className="space-y-3 opacity-70 text-base leading-relaxed">
+                    <li>— Memberikan pelayanan ekselen dan terpercaya.</li>
+                    <li>— Mengembangkan talenta kreatif dan profesional.</li>
+                    <li>— Menciptakan ekosistem bisnis yang berkelanjutan.</li>
+                  </ul>
+                </div>
               </div>
             </div>
           </div>
         </section>
 
-        {/* Layanan & Harga */}
-        <section
-          id="layanan"
-          className="py-20 px-4 border-t border-opacity-10 border-black"
-          style={servicesStyle}
-        >
+        {/* Layanan & Harga: Clean borders, no heavy shadows */}
+        <section id="layanan" className="py-24 px-6 lg:px-12 border-t border-opacity-10 border-current" style={servicesStyle}>
           <div className="max-w-7xl mx-auto">
-            <h2 className="text-4xl font-bold mb-4 text-center">
-              Layanan & Harga
-            </h2>
-            <p className="text-center mb-12 max-w-3xl mx-auto opacity-80">
-              Pilih layanan yang sesuai dengan kebutuhan Anda. Kami menyediakan
-              berbagai paket untuk mendukung kesuksesan event dan bisnis Anda.
-            </p>
+            <div className="flex flex-col md:flex-row justify-between items-end mb-16 gap-6">
+                <div className="max-w-2xl">
+                    <h2 className="text-4xl md:text-5xl font-semibold tracking-tighter mb-4">Layanan & Harga</h2>
+                    <p className="opacity-70 text-lg">Pilih layanan yang sesuai dengan kebutuhan Anda. Kami menyediakan berbagai paket untuk mendukung kesuksesan event Anda.</p>
+                </div>
+            </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {services.map((service, idx) => (
                 <div
                   key={idx}
-                  className="rounded-xl shadow-lg p-8 flex flex-col border border-opacity-10 border-black"
-                  style={{ backgroundColor: "rgba(255,255,255,0.05)" }}
+                  className="rounded-3xl p-8 lg:p-10 flex flex-col border border-opacity-20"
+                  style={{ borderColor: servicesStyle.color }}
+                 
+                 
                 >
-                  <h3 className="text-2xl font-bold mb-2">{service.name}</h3>
-                  <p className="mb-6 flex-1 text-sm opacity-80">
+                  <h3 className="text-2xl font-bold mb-3 tracking-tight">{service.name}</h3>
+                  <p className="mb-8 flex-1 text-base opacity-70 leading-relaxed">
                     {service.description}
                   </p>
 
-                  <div className="mb-6">
-                    <span className="text-sm line-through block mb-1 opacity-60">
-                      Rp {Math.floor(Math.random() * 5 + 2)}.000.000
-                    </span>
-                    <div className="text-2xl font-bold">{service.price}</div>
+                  <div className="mb-8 pt-6 border-t border-opacity-20" style={{ borderColor: servicesStyle.color }}>
+                    <div className="text-sm opacity-50 line-through mb-1">Rp {Math.floor(Math.random() * 5 + 2)}.000.000</div>
+                    <div className="text-3xl font-semibold tracking-tight">{service.price}</div>
                   </div>
 
-                  <ul className="space-y-3 mb-8 opacity-80">
-                    <li className="flex items-center text-sm">
-                      <svg
-                        className="w-4 h-4 mr-2"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth="2"
-                          d="M5 13l4 4L19 7"
-                        ></path>
-                      </svg>
+                  <ul className="space-y-4 mb-10 opacity-80">
+                    <li className="flex items-start text-sm">
+                      <span className="mr-3 opacity-50">—</span>
                       Sertifikat / Konsep Acara
                     </li>
-                    <li className="flex items-center text-sm">
-                      <svg
-                        className="w-4 h-4 mr-2"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth="2"
-                          d="M5 13l4 4L19 7"
-                        ></path>
-                      </svg>
+                    <li className="flex items-start text-sm">
+                      <span className="mr-3 opacity-50">—</span>
                       Materi Praktik / Manajemen Vendor
                     </li>
-                    <li className="flex items-center text-sm">
-                      <svg
-                        className="w-4 h-4 mr-2"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth="2"
-                          d="M5 13l4 4L19 7"
-                        ></path>
-                      </svg>
-                      Instruktur Berpengalaman / On-day Execution
+                    <li className="flex items-start text-sm">
+                      <span className="mr-3 opacity-50">—</span>
+                      On-day Execution
                     </li>
                   </ul>
 
                   <a
                     href={`https://wa.me/${contact.whatsapp}?text=Halo,%20saya%20pesan%20layanan%20${service.name}`}
-                    className="block w-full py-3 text-center border rounded font-medium transition-colors"
+                    className="block w-full py-4 text-center rounded-full font-semibold transition-all active:scale-[0.98]"
                     style={{
-                      borderColor: servicesStyle.color,
-                      color: servicesStyle.color,
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.backgroundColor =
-                        servicesStyle.color;
-                      e.currentTarget.style.color =
-                        servicesStyle.backgroundColor;
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.backgroundColor = "transparent";
-                      e.currentTarget.style.color = servicesStyle.color;
+                      backgroundColor: theme.accentColor,
+                      color: "#fff", // assuming accent needs white text
                     }}
                     target="_blank"
                     rel="noreferrer"
@@ -639,145 +504,100 @@ const Template01 = ({ data }) => {
           </div>
         </section>
 
-        {/* Portofolio & Dokumentasi */}
-        <section
-          id="portofolio"
-          className="py-20 px-4 border-t border-opacity-10 border-black"
-          style={portfolioStyle}
-        >
+        {/* Portofolio */}
+        <section id="portofolio" className="py-24 px-6 lg:px-12 border-t border-opacity-10 border-current" style={portfolioStyle}>
           <div className="max-w-7xl mx-auto">
-            <h2 className="text-4xl font-bold mb-4 text-center">
-              Portofolio & Dokumentasi
-            </h2>
-            <p className="text-center mb-10 opacity-80">
-              Momen dan proyek terbaik yang pernah kami kerjakan.
-            </p>
+            <h2 className="text-4xl md:text-5xl font-semibold tracking-tighter mb-4">Karya Kami</h2>
+            <p className="mb-12 opacity-70 text-lg">Momen terbaik yang pernah kami dokumentasikan.</p>
 
-            <div className="flex flex-wrap justify-center gap-3 mb-12">
+            <div className="flex flex-wrap gap-2 mb-12">
               <button
-                className="px-6 py-2 rounded-full text-sm font-medium"
-                style={getBtnStyle(
-                  "portfolio",
-                  theme.secondaryColor,
-                  theme.primaryColor,
-                )}
+                onClick={() => setActiveFilter("Semua")}
+                className={`px-6 py-2.5 rounded-full text-sm font-medium transition-all active:scale-[0.98] ${
+                  activeFilter === "Semua" ? "" : "opacity-70 hover:opacity-100 border border-opacity-20"
+                }`}
+                style={
+                  activeFilter === "Semua"
+                    ? getBtnStyle("portfolio", theme.secondaryColor, theme.primaryColor)
+                    : { borderColor: portfolioStyle.color }
+                }
               >
                 Semua
               </button>
-              <button
-                className="px-6 py-2 rounded-full text-sm font-medium border border-opacity-20 border-black opacity-70 hover:opacity-100"
-                style={{ borderColor: portfolioStyle.color }}
-              >
-                Wedding
-              </button>
-              <button
-                className="px-6 py-2 rounded-full text-sm font-medium border border-opacity-20 border-black opacity-70 hover:opacity-100"
-                style={{ borderColor: portfolioStyle.color }}
-              >
-                Event
-              </button>
-              <button
-                className="px-6 py-2 rounded-full text-sm font-medium border border-opacity-20 border-black opacity-70 hover:opacity-100"
-                style={{ borderColor: portfolioStyle.color }}
-              >
-                Marketing
-              </button>
-              <button
-                className="px-6 py-2 rounded-full text-sm font-medium border border-opacity-20 border-black opacity-70 hover:opacity-100"
-                style={{ borderColor: portfolioStyle.color }}
-              >
-                Lainnya
-              </button>
+              {['Wedding', 'Event', 'Marketing', 'Lainnya'].map((cat) => (
+                <button
+                  key={cat}
+                  onClick={() => setActiveFilter(cat)}
+                  className={`px-6 py-2.5 rounded-full text-sm font-medium transition-all active:scale-[0.98] ${
+                    activeFilter === cat ? "" : "opacity-70 hover:opacity-100 border border-opacity-20"
+                  }`}
+                  style={
+                    activeFilter === cat
+                      ? getBtnStyle("portfolio", theme.secondaryColor, theme.primaryColor)
+                      : { borderColor: portfolioStyle.color }
+                  }
+                >
+                  {cat}
+                </button>
+              ))}
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {portfolio.map((item, idx) => (
-                <div
-                  key={idx}
-                  className="rounded-xl overflow-hidden shadow h-80"
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {portfolio
+                .filter((item) => activeFilter === "Semua" || item.category === activeFilter)
+                .map((item, idx) => (
+                <div 
+                  key={idx} 
+                  className="group overflow-hidden rounded-3xl aspect-[4/3] bg-black relative"
+                 
+                 
                 >
                   <img
                     src={item.image}
                     alt={item.title}
-                    className="w-full h-full object-cover hover:scale-105 transition-transform duration-500"
+                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105 opacity-90 group-hover:opacity-100"
                   />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-8">
+                     <div className="text-white font-medium text-lg">{item.title}</div>
+                     {item.category && (
+                       <div className="text-white/70 text-sm mt-1">{item.category}</div>
+                     )}
+                  </div>
                 </div>
               ))}
             </div>
           </div>
         </section>
 
-        {/* Testimoni Klien */}
-        <section
-          id="testimoni"
-          className="py-24 px-4 overflow-hidden"
-          style={testimonialsStyle}
-        >
-          <div className="max-w-6xl mx-auto">
-            <div className="text-center mb-8">
-              <h2 className="text-4xl md:text-5xl font-extrabold mb-4">
-                Testimoni Klien
-              </h2>
-              <div
-                className="flex justify-center items-center mb-4 text-xl space-x-1"
-                style={textAccent}
-              >
-                <span>★</span>
-                <span>★</span>
-                <span>★</span>
-                <span>★</span>
-                <span>★</span>
+        {/* Testimoni Klien: Refined 3D Carousel */}
+        <section id="testimoni" className="py-24 px-6 lg:px-12 border-t border-opacity-10 border-current overflow-hidden" style={testimonialsStyle}>
+          <div className="max-w-7xl mx-auto">
+             <div className="text-center mb-16">
+              <h2 className="text-4xl md:text-5xl font-semibold tracking-tighter mb-4">Kata Klien</h2>
+              <div className="flex justify-center items-center mb-4 text-xl space-x-1" style={textAccent}>
+                <span>★</span><span>★</span><span>★</span><span>★</span><span>★</span>
               </div>
-              <p className="opacity-80">
-                4.9 / 5.0 Rata-rata Rating
-                <br />
-                Apa kata mereka yang telah bekerja sama dengan kami.
-              </p>
             </div>
 
-            <div className="relative h-[450px] md:h-[350px] flex items-center justify-center w-full mt-10 mb-8">
-              {/* Prev Button */}
+            <div className="relative h-[450px] md:h-[400px] flex items-center justify-center w-full">
               <button
-                onClick={() =>
-                  setActiveTestimonial(
-                    (prev) =>
-                      (prev - 1 + testimonials.length) % testimonials.length,
-                  )
-                }
-                className="absolute left-0 md:left-8 z-30 p-3 opacity-60 hover:opacity-100 transition-opacity bg-black bg-opacity-20 rounded-full"
-                style={{ color: testimonialsStyle.color }}
+                onClick={() => setActiveTestimonial((prev) => (prev - 1 + testimonials.length) % testimonials.length)}
+                className="absolute left-0 z-30 p-4 opacity-50 hover:opacity-100 transition-all active:scale-[0.9] rounded-full border border-opacity-20"
+                style={{ color: testimonialsStyle.color, borderColor: testimonialsStyle.color }}
               >
-                <svg
-                  className="w-6 h-6"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    d="M15 19l-7-7 7-7"
-                  ></path>
-                </svg>
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M15 19l-7-7 7-7"></path></svg>
               </button>
 
-              <div
-                className="relative w-full max-w-5xl h-full flex justify-center items-center"
-                style={{ perspective: "1200px" }}
-              >
+              <div className="relative w-full max-w-5xl h-full flex justify-center items-center" style={{ perspective: "1200px" }}>
                 {testimonials.map((testi, idx) => {
                   const total = testimonials.length;
                   let offset = idx - activeTestimonial;
-
-                  // Handle wrap around
                   if (offset < -Math.floor(total / 2)) offset += total;
                   if (offset > Math.floor(total / 2)) offset -= total;
-
+                  
                   const isActive = offset === 0;
                   const isVisible = Math.abs(offset) <= 1;
 
-                  // Position & rotation: left card rotates toward center, right card rotates toward center
                   let xPos = "0%";
                   let rotateY = "0deg";
                   let scale = 1;
@@ -785,158 +605,105 @@ const Template01 = ({ data }) => {
                   let opacity = 1;
 
                   if (offset === -1) {
-                    xPos = "-75%";
-                    rotateY = "25deg";
-                    scale = 0.8;
+                    xPos = "-60%";
+                    rotateY = "15deg";
+                    scale = 0.85;
                     zIndex = 10;
-                    opacity = 0.5;
+                    opacity = 0.4;
                   } else if (offset === 1) {
-                    xPos = "75%";
-                    rotateY = "-25deg";
-                    scale = 0.8;
+                    xPos = "60%";
+                    rotateY = "-15deg";
+                    scale = 0.85;
                     zIndex = 10;
-                    opacity = 0.5;
+                    opacity = 0.4;
                   } else if (!isActive) {
                     opacity = 0;
                     zIndex = 0;
-                    scale = 0.6;
-                    xPos = offset < 0 ? "-120%" : "120%";
+                    scale = 0.7;
+                    xPos = offset < 0 ? "-100%" : "100%";
                   }
 
                   return (
                     <div
                       key={idx}
-                      className={`absolute top-1/2 left-1/2 w-[85%] md:w-[420px] rounded-2xl p-8 md:p-10 flex flex-col items-center text-center ${
-                        !isVisible ? "pointer-events-none" : ""
-                      }`}
+                      className={`absolute top-1/2 left-1/2 w-[90%] md:w-[480px] rounded-3xl p-10 flex flex-col items-center text-center border border-opacity-20 ${!isVisible ? "pointer-events-none" : ""}`}
                       style={{
-                        backgroundColor: "rgba(30, 41, 59, 0.95)",
-                        color: "#f8fafc",
-                        border: "1px solid rgba(255,255,255,0.08)",
+                        backgroundColor: testimonialsStyle.backgroundColor,
+                        color: testimonialsStyle.color,
+                        borderColor: testimonialsStyle.color,
                         transform: `translate(-50%, -50%) translateX(${xPos}) rotateY(${rotateY}) scale(${scale})`,
                         opacity: opacity,
                         zIndex: zIndex,
-                        transition: "all 0.6s cubic-bezier(0.4, 0, 0.2, 1)",
+                        transition: "all 0.6s cubic-bezier(0.16, 1, 0.3, 1)",
                         transformStyle: "preserve-3d",
-                        boxShadow: isActive
-                          ? "0 25px 50px rgba(0,0,0,0.4)"
-                          : "0 10px 30px rgba(0,0,0,0.2)",
                       }}
                     >
-                      <div className="w-14 h-14 rounded-full mb-3 overflow-hidden ring-2 ring-opacity-20 ring-white">
-                        <img
-                          src={`https://ui-avatars.com/api/?name=${encodeURIComponent(testi.name)}&background=random`}
-                          alt={testi.name}
-                        />
+                      <div className="mb-4 opacity-80" style={textAccent}>
+                         <svg className="w-8 h-8 mx-auto" fill="currentColor" viewBox="0 0 24 24"><path d="M14.017 21v-7.391c0-5.704 3.731-9.57 8.983-10.609l.995 2.151c-2.432.917-3.995 3.638-3.995 5.849h4v10h-9.983zm-14.017 0v-7.391c0-5.704 3.748-9.57 9-10.609l.996 2.151c-2.433.917-3.996 3.638-3.996 5.849h3.983v10h-9.983z"/></svg>
                       </div>
-                      <div className="mb-3 text-yellow-400 text-base">
-                        {"★".repeat(testi.rating || 5)}
-                        {"☆".repeat(5 - (testi.rating || 5))}
-                      </div>
-                      <p className="text-sm md:text-base italic mb-6 max-w-sm opacity-90 font-medium leading-relaxed">
+                      <p className="text-lg md:text-xl font-medium leading-relaxed opacity-90 mb-8">
                         "{testi.text}"
                       </p>
-                      <div className="font-bold text-sm">{testi.name}</div>
-                      <div className="text-xs mt-1 opacity-50">Client</div>
+                      <div className="w-12 h-12 rounded-full mb-3 overflow-hidden">
+                        <img src={`https://ui-avatars.com/api/?name=${encodeURIComponent(testi.name)}&background=random`} alt={testi.name} />
+                      </div>
+                      <div className="font-semibold tracking-tight">{testi.name}</div>
+                      <div className="text-sm mt-1 opacity-50">Client</div>
                     </div>
                   );
                 })}
               </div>
 
-              {/* Next Button */}
               <button
-                onClick={() =>
-                  setActiveTestimonial(
-                    (prev) => (prev + 1) % testimonials.length,
-                  )
-                }
-                className="absolute right-0 md:right-8 z-30 p-3 opacity-60 hover:opacity-100 transition-opacity bg-black bg-opacity-20 rounded-full"
-                style={{ color: testimonialsStyle.color }}
+                onClick={() => setActiveTestimonial((prev) => (prev + 1) % testimonials.length)}
+                className="absolute right-0 z-30 p-4 opacity-50 hover:opacity-100 transition-all active:scale-[0.9] rounded-full border border-opacity-20"
+                style={{ color: testimonialsStyle.color, borderColor: testimonialsStyle.color }}
               >
-                <svg
-                  className="w-6 h-6"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    d="M9 5l7 7-7 7"
-                  ></path>
-                </svg>
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M9 5l7 7-7 7"></path></svg>
               </button>
-            </div>
-
-            {/* Pagination Dots */}
-            <div className="flex justify-center space-x-2">
-              {testimonials.map((_, idx) => (
-                <button
-                  key={idx}
-                  onClick={() => setActiveTestimonial(idx)}
-                  className={`h-2 rounded-full transition-all duration-300 ${activeTestimonial === idx ? "w-6 opacity-100" : "w-2 opacity-30"}`}
-                  style={{ backgroundColor: testimonialsStyle.color }}
-                  aria-label={`Go to testimonial ${idx + 1}`}
-                />
-              ))}
             </div>
           </div>
         </section>
 
-        {/* Form Booking */}
-        <section
-          id="booking"
-          className="py-20 px-4 border-t border-opacity-10 border-black"
-          style={bookingStyle}
-        >
-          <div className="max-w-3xl mx-auto">
-            <h2 className="text-4xl font-bold mb-8 text-center">
-              Booking Layanan
-            </h2>
+        {/* Form Booking: Premium UI */}
+        <section id="booking" className="py-24 px-6 lg:px-12 border-t border-opacity-10 border-current" style={bookingStyle}>
+          <div className="max-w-4xl mx-auto grid md:grid-cols-2 gap-16 items-center">
+            <div>
+               <h2 className="text-4xl md:text-5xl font-semibold tracking-tighter mb-4">Mari Berbicara.</h2>
+               <p className="opacity-70 text-lg leading-relaxed mb-8">
+                 Isi formulir ini untuk memulai konsultasi awal bersama tim kami. Kami siap mewujudkan konsep Anda.
+               </p>
+            </div>
+            
             <form
-              className="space-y-4 p-8 rounded-xl shadow-xl border border-opacity-10"
-              style={{
-                borderColor: bookingStyle.color,
-                backgroundColor: "rgba(255,255,255,0.05)",
-              }}
+              className="space-y-6"
+             
+             
             >
               <div>
-                <label className="block text-sm font-semibold mb-1 opacity-80">
-                  Nama Lengkap
+                <label className="block text-sm font-semibold mb-2 opacity-80 uppercase tracking-widest">
+                  Nama
                 </label>
                 <input
                   type="text"
                   value={bookingForm.name}
-                  onChange={(e) =>
-                    setBookingForm({ ...bookingForm, name: e.target.value })
-                  }
-                  className="w-full p-3 rounded border border-opacity-20 bg-transparent focus:border-opacity-100 outline-none transition-colors"
-                  style={{
-                    borderColor: bookingStyle.color,
-                    color: bookingStyle.color,
-                  }}
-                  placeholder="Nama Anda"
+                  onChange={(e) => setBookingForm({ ...bookingForm, name: e.target.value })}
+                  className="w-full pb-3 bg-transparent border-b border-opacity-20 focus:border-opacity-100 outline-none transition-colors text-lg"
+                  style={{ borderColor: bookingStyle.color, color: bookingStyle.color }}
+                  placeholder="Nama lengkap anda"
                 />
               </div>
               <div>
-                <label className="block text-sm font-semibold mb-1 opacity-80">
-                  Pilih Layanan
+                <label className="block text-sm font-semibold mb-2 opacity-80 uppercase tracking-widest">
+                  Layanan
                 </label>
                 <select
                   value={bookingForm.service}
-                  onChange={(e) =>
-                    setBookingForm({ ...bookingForm, service: e.target.value })
-                  }
-                  className="w-full p-3 rounded border border-opacity-20 bg-transparent focus:border-opacity-100 outline-none transition-colors"
-                  style={{
-                    borderColor: bookingStyle.color,
-                    color: bookingStyle.color,
-                  }}
+                  onChange={(e) => setBookingForm({ ...bookingForm, service: e.target.value })}
+                  className="w-full pb-3 bg-transparent border-b border-opacity-20 focus:border-opacity-100 outline-none transition-colors text-lg appearance-none"
+                  style={{ borderColor: bookingStyle.color, color: bookingStyle.color }}
                 >
-                  <option value="" style={{ color: "#000" }}>
-                    Pilih salah satu...
-                  </option>
+                  <option value="" style={{ color: "#000" }}>Pilih layanan...</option>
                   {services.map((s, i) => (
                     <option key={i} value={s.name} style={{ color: "#000" }}>
                       {s.name}
@@ -945,151 +712,117 @@ const Template01 = ({ data }) => {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-semibold mb-1 opacity-80">
-                  Catatan Tambahan
+                <label className="block text-sm font-semibold mb-2 opacity-80 uppercase tracking-widest">
+                  Pesan / Catatan
                 </label>
                 <textarea
                   value={bookingForm.notes}
-                  onChange={(e) =>
-                    setBookingForm({ ...bookingForm, notes: e.target.value })
-                  }
-                  className="w-full p-3 rounded border border-opacity-20 bg-transparent focus:border-opacity-100 outline-none transition-colors h-24"
-                  style={{
-                    borderColor: bookingStyle.color,
-                    color: bookingStyle.color,
-                  }}
-                  placeholder="Detail pesanan..."
+                  onChange={(e) => setBookingForm({ ...bookingForm, notes: e.target.value })}
+                  className="w-full pb-3 bg-transparent border-b border-opacity-20 focus:border-opacity-100 outline-none transition-colors h-24 text-lg resize-none"
+                  style={{ borderColor: bookingStyle.color, color: bookingStyle.color }}
+                  placeholder="Deskripsikan rencana anda..."
                 />
               </div>
               <button
                 type="button"
                 onClick={handleBookingSubmit}
-                className="w-full py-4 rounded-lg font-bold text-lg mt-4 shadow-lg hover:opacity-90 transition-opacity"
-                style={getBtnStyle(
-                  "booking",
-                  theme.secondaryColor,
-                  theme.primaryColor,
-                )}
+                className="w-full py-4 rounded-full font-semibold text-lg mt-4 transition-all active:scale-[0.98]"
+                style={getBtnStyle("booking", theme.secondaryColor, theme.primaryColor)}
               >
-                Kirim Form Booking
+                Kirim Permintaan
               </button>
             </form>
           </div>
         </section>
       </main>
 
-      {/* Footer */}
-      <footer
-        className="border-t border-opacity-20 border-white"
-        style={footerStyle}
-      >
-        {/* Main Footer Content */}
-        <div className="max-w-7xl mx-auto px-6 py-12">
-          <div
-            className={`grid gap-8 items-start ${contact.mapsUrl ? "md:grid-cols-2" : "md:grid-cols-2"}`}
-          >
-            {/* Kiri: Info Bisnis + Kontak */}
-            <div className="space-y-8">
-              {/* Info Bisnis */}
+      {/* Section: Lokasi / Google Maps Embed */}
+      {contact.address && (
+        <section
+          id="lokasi"
+          style={{ backgroundColor: theme.primaryColor, color: theme.secondaryColor }}
+          className="py-20 px-6 lg:px-12"
+        >
+          <div className="max-w-7xl mx-auto">
+            <div className="mb-10 flex flex-col md:flex-row md:items-end md:justify-between gap-4">
               <div>
-                <div className="font-bold text-xl mb-3">{business.name}</div>
-                <p className="text-sm opacity-70 leading-relaxed">
-                  {business.description}
-                </p>
+                <p className="text-xs uppercase tracking-[0.2em] opacity-40 mb-2 font-semibold">Temukan Kami</p>
+                <h2 className="text-4xl md:text-5xl font-semibold tracking-tighter">Lokasi Kami</h2>
               </div>
-
-              {/* Kontak */}
-              <div>
-                <h4 className="font-bold text-sm uppercase tracking-wider mb-3 opacity-60">
-                  Hubungi Kami
-                </h4>
-                <div className="space-y-2 text-sm">
-                  {contact.whatsapp && (
-                    <a
-                      href={`https://wa.me/${contact.whatsapp}`}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="flex items-center gap-2 opacity-80 hover:opacity-100 transition-opacity"
-                    >
-                      <svg
-                        viewBox="0 0 24 24"
-                        fill="currentColor"
-                        className="w-4 h-4 shrink-0"
-                      >
-                        <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51a12.8 12.8 0 0 0-.57-.01c-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413Z" />
-                      </svg>
-                      <span>+{contact.whatsapp}</span>
-                    </a>
-                  )}
-                  {contact.email && (
-                    <a
-                      href={`mailto:${contact.email}`}
-                      className="flex items-center gap-2 opacity-80 hover:opacity-100 transition-opacity"
-                    >
-                      <svg
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        className="w-4 h-4 shrink-0"
-                      >
-                        <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
-                        <polyline points="22,6 12,13 2,6" />
-                      </svg>
-                      <span>{contact.email}</span>
-                    </a>
-                  )}
-                  {contact.address && (
-                    <div className="flex items-start gap-2 opacity-80">
-                      <svg
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        className="w-4 h-4 shrink-0 mt-0.5"
-                      >
-                        <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
-                        <circle cx="12" cy="10" r="3" />
-                      </svg>
-                      <span className="leading-relaxed">{contact.address}</span>
-                    </div>
-                  )}
-                </div>
+              <div className="flex items-center gap-3 opacity-60">
+                <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+                <span className="text-sm leading-relaxed max-w-xs">{contact.address}</span>
               </div>
             </div>
 
-            {/* Kanan: Maps embed (jika ada) atau kosong */}
-            {contact.mapsUrl ? (
-              <div
-                className="rounded-xl overflow-hidden"
-                style={{ height: "280px" }}
-              >
+            <div
+              className="w-full overflow-hidden rounded-2xl"
+              style={{ height: '420px', border: `1px solid ${theme.secondaryColor}22` }}
+            >
+              {getMapEmbedUrl(contact.address) ? (
                 <iframe
-                  src={contact.mapsUrl}
+                  title="Lokasi Kami"
+                  src={getMapEmbedUrl(contact.address)}
                   width="100%"
                   height="100%"
-                  style={{ border: 0, display: "block" }}
-                  allowFullScreen=""
+                  style={{ border: 0, filter: 'grayscale(20%) contrast(1.05)' }}
+                  allowFullScreen
                   loading="lazy"
                   referrerPolicy="no-referrer-when-downgrade"
-                  title="Lokasi Kami"
                 />
-              </div>
-            ) : null}
+              ) : (
+                <div className="w-full h-full flex items-center justify-center opacity-30">
+                  <p className="text-lg">Alamat belum tersedia</p>
+                </div>
+              )}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* Footer: Clean and minimal */}
+      <footer className="border-t border-opacity-20" style={{ ...footerStyle, borderColor: footerStyle.color }}>
+        <div className="max-w-7xl mx-auto px-6 py-16">
+          <div className="grid gap-12 md:grid-cols-12">
+            <div className="md:col-span-6 space-y-6">
+               <div className="font-bold text-2xl tracking-tight">{business.name}</div>
+               <p className="text-base opacity-70 leading-relaxed max-w-sm">
+                 {business.description}
+               </p>
+            </div>
+
+            <div className="md:col-span-6 flex flex-col md:items-end space-y-6">
+                <div className="space-y-4 text-base">
+                  {contact.whatsapp && (
+                    <a href={`https://wa.me/${contact.whatsapp}`} target="_blank" rel="noreferrer" className="flex items-center md:justify-end gap-3 opacity-70 hover:opacity-100 transition-opacity">
+                      <span>WhatsApp : +{contact.whatsapp}</span>
+                    </a>
+                  )}
+                  {contact.email && (
+                    <a href={`mailto:${contact.email}`} className="flex items-center md:justify-end gap-3 opacity-70 hover:opacity-100 transition-opacity">
+                      <span>Email : {contact.email}</span>
+                    </a>
+                  )}
+                  {contact.address && (
+                    <div className="flex flex-col md:items-end gap-1 opacity-70">
+                      <span className="font-semibold uppercase tracking-widest text-xs opacity-50">Lokasi</span>
+                      <span className="leading-relaxed md:text-right max-w-xs">{contact.address}</span>
+                    </div>
+                  )}
+                </div>
+            </div>
           </div>
         </div>
 
-        {/* Bottom bar: big 7arzz branding */}
-        <div className="border-t border-opacity-10 border-current">
-          <div className="max-w-7xl mx-auto px-6 py-6 flex flex-col md:flex-row justify-between items-center gap-4">
-            <p className="text-xs opacity-40">
-              &copy; {new Date().getFullYear()} {business.name}. All rights
-              reserved.
+        <div className="border-t border-opacity-10" style={{ borderColor: footerStyle.color }}>
+          <div className="max-w-7xl mx-auto px-6 py-8 flex justify-between items-center">
+            <p className="text-sm opacity-50">
+              &copy; {new Date().getFullYear()} {business.name}.
             </p>
-            <p
-              className="font-black tracking-tighter opacity-20 select-none"
-              style={{ fontSize: "clamp(2rem, 5vw, 4rem)", lineHeight: 1 }}
-            >
+            <p className="font-bold tracking-tighter opacity-30 select-none text-2xl">
               7arzz
             </p>
           </div>
@@ -1101,13 +834,10 @@ const Template01 = ({ data }) => {
         href={`https://wa.me/${contact.whatsapp}?text=Halo,%20saya%20ingin%20konsultasi/order%20di%20${encodeURIComponent(business.name)}`}
         target="_blank"
         rel="noopener noreferrer"
-        className="fixed bottom-6 right-6 z-50 p-4 rounded-full shadow-2xl hover:scale-110 transition-transform duration-300 flex items-center justify-center"
-        style={{
-          width: "60px",
-          height: "60px",
-          backgroundColor: "#25D366",
-          color: "#fff",
-        }}
+        className="fixed bottom-6 right-6 z-50 p-4 rounded-full shadow-2xl hover:scale-105 active:scale-95 transition-all duration-300 flex items-center justify-center bg-[#25D366] text-white"
+        style={{ width: "60px", height: "60px" }}
+       
+       
       >
         <svg viewBox="0 0 24 24" fill="currentColor" className="w-8 h-8">
           <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51a12.8 12.8 0 0 0-.57-.01c-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413Z" />
