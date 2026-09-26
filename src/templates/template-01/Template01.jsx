@@ -403,7 +403,7 @@ const Template01 = ({ data }) => {
 
   return (
     <div
-      className="font-sans w-full transition-colors duration-300 selection:bg-black selection:text-white overflow-x-hidden"
+      className="font-sans w-full transition-colors duration-300 selection:bg-black selection:text-white"
       style={aboutStyle}
     >
       {/* ── 7arzz Intro Popup ── */}
