@@ -452,6 +452,22 @@ const EditorForm = ({ data, setData, activeTab }) => {
             </div>
           </div>
 
+          <div className="mb-6 p-4 rounded-xl border border-purple-100 bg-purple-50/50">
+            <h3 className="font-bold text-purple-800 mb-4 text-sm uppercase tracking-wider">Style Animasi</h3>
+            <p className="text-xs text-purple-600 mb-3">Pilih gaya animasi yang sesuai dengan jenis bisnis Anda (Warna akan tetap sama, hanya efek kemunculannya yang berubah).</p>
+            <div>
+              <select 
+                value={data.theme.animationMode || 'wo'} 
+                onChange={(e) => handleChange('theme', 'animationMode', e.target.value)}
+                className="w-full border border-gray-300 rounded-lg p-2.5 text-sm outline-none focus:ring-2 focus:ring-purple-500"
+              >
+                <option value="wo">Wedding Organizer (Elegan, Lambat, Lembut)</option>
+                <option value="eo">Event Organizer (Dinamis, Cepat, Menghentak)</option>
+                <option value="travel">Tour & Travel (Ceria, Mengapung, Mengalir)</option>
+              </select>
+            </div>
+          </div>
+
           <h3 className="font-bold text-gray-800 mb-4 text-sm uppercase tracking-wider mt-8">Warna Per Bagian (Kustom)</h3>
           <p className="text-xs text-gray-500 mb-4">Ganti warna ini jika Anda ingin setiap halaman/bagian memiliki warna yang berbeda.</p>
           <div className="space-y-3">

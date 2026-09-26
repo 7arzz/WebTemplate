@@ -2,6 +2,244 @@ import React, { useState, useEffect, useRef } from "react";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 
+// Register GSAP plugins at module level so they are available
+// before any component (including ScrollDecorations) runs its effects
+gsap.registerPlugin(ScrollTrigger);
+
+// ── Travel Hero Plane Animation (auto-loop, diagonal fly) ───────────────────
+const TravelPlaneHeader = ({ color = '#ffffff', accentColor }) => {
+  const planColor = accentColor || color || '#ffffff';
+
+  return (
+    <>
+      <style>{`
+        @keyframes planeHeroFly0 {
+          0%   { transform: translate(-120px, 0) rotate(0deg) scale(1); opacity: 0; }
+          10%  { opacity: 1; }
+          45%  { transform: translate(45vw, 0) rotate(0deg) scale(1); opacity: 1; }
+          90%  { opacity: 1; }
+          100% { transform: translate(calc(100vw + 120px), -5vh) rotate(-5deg) scale(1); opacity: 0; }
+        }
+        @keyframes planeHeroFly1 {
+          0%   { transform: translate(-120px, 0) rotate(0deg) scale(0.85); opacity: 0; }
+          10%  { opacity: 1; }
+          45%  { transform: translate(45vw, 0) rotate(0deg) scale(0.85); opacity: 1; }
+          90%  { opacity: 1; }
+          100% { transform: translate(calc(100vw + 120px), -35vh) rotate(-30deg) scale(0.85); opacity: 0; }
+        }
+        @keyframes planeHeroFly2 {
+          0%   { transform: translate(-120px, 0) rotate(0deg) scale(0.7); opacity: 0; }
+          10%  { opacity: 1; }
+          45%  { transform: translate(45vw, 0) rotate(0deg) scale(0.7); opacity: 1; }
+          90%  { opacity: 1; }
+          100% { transform: translate(calc(100vw + 120px), 35vh) rotate(30deg) scale(0.7); opacity: 0; }
+        }
+        .travel-hero-plane {
+          position: absolute;
+          top: 40%;
+          left: 0;
+          pointer-events: none;
+          z-index: 200;
+          opacity: 0;
+        }
+      `}</style>
+      
+      {/* Membuat 3 pesawat berbaris yang berpisah arah saat di tengah */}
+      {[0, 1, 2].map((index) => {
+        return (
+          <div
+            key={index}
+            className="travel-hero-plane"
+            style={{
+              color: planColor,
+              filter: `drop-shadow(0 4px 12px ${planColor}aa)`,
+              animation: `planeHeroFly${index} 6s linear infinite`,
+              marginLeft: `-${index * 160}px`, // Jarak antar pesawat agar berbaris
+            }}
+          >
+            <svg
+              width="100"
+              height="100"
+              viewBox="0 0 24 24"
+              fill="currentColor"
+              style={{ transform: 'rotate(90deg)' }}
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path d="M21 16v-2l-8-5V3.5c0-.83-.67-1.5-1.5-1.5S10 2.67 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z"/>
+            </svg>
+          </div>
+        );
+      })}
+    </>
+  );
+};
+
+const ScrollDecorations = ({ mode, color }) => {
+  const containerRef = useRef(null);
+
+  useEffect(() => {
+    const ctx = gsap.context(() => {
+      if (mode === 'travel') {
+        // travel plane handled by TravelPlaneHeader canvas animation in navbar
+      } else if (mode === 'eo') {
+        // EO mode uses CSS animations for equalizer and confetti instead of ScrollTrigger
+      } else if (mode === 'wo') {
+        gsap.utils.toArray(".wo-petal").forEach((petal, i) => {
+          gsap.to(petal, {
+            y: "150vh",
+            rotate: "random(180, 360)",
+            x: "random(-150, 150)",
+            ease: "none",
+            scrollTrigger: {
+              trigger: document.body,
+              start: "top top",
+              end: "bottom bottom",
+              scrub: 2 + Math.random(),
+            }
+          });
+        });
+      }
+    }, containerRef);
+    
+    return () => ctx.revert();
+  }, [mode]);
+
+  return (
+    <div className="fixed inset-0 pointer-events-none z-[100] overflow-hidden" ref={containerRef}>
+      {/* travel-plane removed from here — now rendered in the navbar header */}
+      {mode === 'eo' && (
+        <>
+          <style>{`
+            @keyframes eqBar {
+              0% { height: 12px; }
+              50% { height: 48px; }
+              100% { height: 12px; }
+            }
+            @keyframes confettiBlastLeft {
+              0% { transform: translate(0, 0) rotate(0deg) scale(0); opacity: 0; }
+              5% { opacity: 1; scale: 1.2; }
+              100% { transform: translate(calc(30vw + 100px), -90vh) rotate(720deg) scale(0.5); opacity: 0; }
+            }
+            @keyframes confettiBlastRight {
+              0% { transform: translate(0, 0) rotate(0deg) scale(0); opacity: 0; }
+              5% { opacity: 1; scale: 1.2; }
+              100% { transform: translate(calc(-30vw - 100px), -90vh) rotate(-720deg) scale(0.5); opacity: 0; }
+            }
+            .eq-container {
+              display: flex;
+              align-items: flex-end;
+              gap: 4px;
+              opacity: 0.5;
+            }
+            .eq-bar {
+              width: 6px;
+              border-radius: 4px 4px 0 0;
+            }
+          `}</style>
+
+          {/* Equalizer Left */}
+          <div className="fixed bottom-6 left-12 eq-container z-0 pointer-events-none">
+            {[1, 2, 3, 4, 5, 6].map((bar) => (
+              <div 
+                key={bar} 
+                className="eq-bar" 
+                style={{ 
+                  backgroundColor: color,
+                  animation: `eqBar ${0.4 + Math.random() * 0.6}s ease-in-out infinite alternate`,
+                  animationDelay: `${Math.random() * 0.5}s`
+                }}
+              />
+            ))}
+          </div>
+
+          {/* Equalizer Right */}
+          <div className="fixed bottom-6 right-12 eq-container z-0 pointer-events-none">
+            {[1, 2, 3, 4, 5, 6].map((bar) => (
+              <div 
+                key={bar} 
+                className="eq-bar" 
+                style={{ 
+                  backgroundColor: color,
+                  animation: `eqBar ${0.4 + Math.random() * 0.6}s ease-in-out infinite alternate`,
+                  animationDelay: `${Math.random() * 0.5}s`
+                }}
+              />
+            ))}
+          </div>
+
+          {/* Confetti Popper Left */}
+          <div className="fixed bottom-0 left-4 w-12 h-12 z-0 pointer-events-none opacity-80" style={{ color: color }}>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-full h-full transform rotate-45">
+              <path d="M5.8 11.3 2 22l10.7-3.79"/>
+              <path d="M4 3h.01"/><path d="M22 8h.01"/><path d="M15 2h.01"/><path d="M22 20h.01"/>
+              <path d="m22 2-2.24.75a2.9 2.9 0 0 0-1.96 3.12v0c.1.86-.57 1.63-1.45 1.63h-.38c-.86 0-1.6.6-1.76 1.44L14 10"/>
+              <path d="m22 13-.82-.33c-.86-.34-1.82.2-1.98 1.11v0c-.11.7-.72 1.22-1.43 1.22H17"/>
+              <path d="m11 2 .33.82c.34.86-.2 1.82-1.11 1.98v0C9.52 4.9 9 5.52 9 6.23V7"/>
+              <path d="M11 13c1.93 1.93 2.83 4.17 2 5-.83.83-3.07-.07-5-2-1.93-1.93-2.83-4.17-2-5 .83-.83 3.07.07 5 2Z"/>
+            </svg>
+            {[...Array(20)].map((_, i) => (
+              <div
+                key={`left-${i}`}
+                className="absolute opacity-70"
+                style={{
+                  width: i % 2 === 0 ? '6px' : '8px',
+                  height: i % 2 === 0 ? '6px' : '8px',
+                  backgroundColor: ['#FF595E', '#FFCA3A', '#8AC926', '#1982C4', '#6A4C93', color][Math.floor(Math.random() * 6)],
+                  borderRadius: i % 3 === 0 ? '50%' : '2px',
+                  animation: `confettiBlastLeft ${1.5 + Math.random() * 1.5}s ease-out infinite`,
+                  animationDelay: `${Math.random() * 2}s`,
+                  left: '50%',
+                  top: '50%'
+                }}
+              />
+            ))}
+          </div>
+
+          {/* Confetti Popper Right */}
+          <div className="fixed bottom-0 right-4 w-12 h-12 z-0 pointer-events-none opacity-80" style={{ color: color }}>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-full h-full transform -rotate-45 scale-x-[-1]">
+              <path d="M5.8 11.3 2 22l10.7-3.79"/>
+              <path d="M4 3h.01"/><path d="M22 8h.01"/><path d="M15 2h.01"/><path d="M22 20h.01"/>
+              <path d="m22 2-2.24.75a2.9 2.9 0 0 0-1.96 3.12v0c.1.86-.57 1.63-1.45 1.63h-.38c-.86 0-1.6.6-1.76 1.44L14 10"/>
+              <path d="m22 13-.82-.33c-.86-.34-1.82.2-1.98 1.11v0c-.11.7-.72 1.22-1.43 1.22H17"/>
+              <path d="m11 2 .33.82c.34.86-.2 1.82-1.11 1.98v0C9.52 4.9 9 5.52 9 6.23V7"/>
+              <path d="M11 13c1.93 1.93 2.83 4.17 2 5-.83.83-3.07-.07-5-2-1.93-1.93-2.83-4.17-2-5 .83-.83 3.07.07 5 2Z"/>
+            </svg>
+             {[...Array(20)].map((_, i) => (
+              <div
+                key={`right-${i}`}
+                className="absolute opacity-70"
+                style={{
+                  width: i % 2 === 0 ? '6px' : '8px',
+                  height: i % 2 === 0 ? '6px' : '8px',
+                  backgroundColor: ['#FF595E', '#FFCA3A', '#8AC926', '#1982C4', '#6A4C93', color][Math.floor(Math.random() * 6)],
+                  borderRadius: i % 3 === 0 ? '50%' : '2px',
+                  animation: `confettiBlastRight ${1.5 + Math.random() * 1.5}s ease-out infinite`,
+                  animationDelay: `${Math.random() * 2}s`,
+                  right: '50%',
+                  top: '50%'
+                }}
+              />
+            ))}
+          </div>
+        </>
+      )}
+      {mode === 'wo' && (
+        <>
+          {[...Array(12)].map((_, i) => (
+             <div key={i} className="wo-petal absolute opacity-40 w-5 h-5 rounded-tl-full rounded-br-full" style={{ 
+               backgroundColor: color, 
+               left: `${5 + i * 8}%`,
+               top: `-${10 + Math.random() * 20}%`,
+               transform: `rotate(${Math.random() * 360}deg)`
+             }}></div>
+          ))}
+        </>
+      )}
+    </div>
+  );
+};
+
 const Template01 = ({ data }) => {
   const { business, theme, services, portfolio, testimonials, contact } = data;
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -27,9 +265,6 @@ const Template01 = ({ data }) => {
   const magneticBtnRef = useRef(null);
 
   useEffect(() => {
-    // Initialize GSAP ScrollTrigger
-    gsap.registerPlugin(ScrollTrigger);
-
     // Text Reveal Animation
     if (heroTextRef.current && heroDescRef.current && btnGroupRef.current) {
       gsap.fromTo(
@@ -139,6 +374,25 @@ const Template01 = ({ data }) => {
 
   const textAccent = { color: theme.accentColor };
 
+  // Helper for dynamic animations based on mode
+  const getAnimClass = (type) => {
+    const mode = theme.animationMode || 'wo';
+    if (mode === 'wo') {
+      if (type === 'card') return 'hover:-translate-y-2 transition-transform duration-500';
+      if (type === 'btn') return 'hover:opacity-80 transition-opacity duration-300';
+      if (type === 'image') return 'animate-wo-fade';
+    } else if (mode === 'eo') {
+      if (type === 'card') return 'hover:scale-105 hover:rotate-1 transition-transform duration-300';
+      if (type === 'btn') return 'hover:animate-eo-pulse';
+      if (type === 'image') return 'animate-eo-slide-in';
+    } else if (mode === 'travel') {
+      if (type === 'card') return 'hover:-translate-y-3 hover:shadow-xl transition-all duration-300';
+      if (type === 'btn') return 'hover:animate-travel-hover';
+      if (type === 'image') return 'animate-travel-float';
+    }
+    return 'transition-all';
+  };
+
   return (
     <div
       className="font-sans w-full transition-colors duration-300 selection:bg-black selection:text-white overflow-x-hidden"
@@ -234,10 +488,16 @@ const Template01 = ({ data }) => {
         </div>
       )}
 
+      {/* GSAP Scroll Decorations (Kelopak/Confetti) */}
+      <ScrollDecorations mode={theme.animationMode || 'wo'} color={theme.accentColor} />
+
+      {/* (Travel plane moved inside hero section) */}
+
       <nav
         className="px-6 py-4 sticky top-0 z-50 border-b border-opacity-10 border-current backdrop-blur-md"
-        style={navbarStyle}
+        style={{ ...navbarStyle, position: 'sticky', overflow: 'hidden' }}
       >
+        {/* Plane moved to hero section for travel mode */}
         <div className="max-w-7xl mx-auto flex justify-between items-center relative z-50">
           <div className="flex items-center space-x-3">
             {business.logoURL && (
@@ -307,6 +567,11 @@ const Template01 = ({ data }) => {
           className="pt-24 pb-20 px-6 lg:px-12 flex items-center min-h-[90vh] overflow-hidden relative"
           style={heroStyle}
         >
+          {/* ── Travel mode plane flies diagonally across hero ── */}
+          {(theme.animationMode || 'wo') === 'travel' && (
+            <TravelPlaneHeader color={theme.accentColor || '#ffffff'} accentColor={theme.accentColor} />
+          )}
+
           {/* Subtle Floating Particles */}
           <div className="absolute inset-0 overflow-hidden pointer-events-none opacity-40">
             {[...Array(15)].map((_, i) => (
@@ -335,28 +600,27 @@ const Template01 = ({ data }) => {
             }
           `}</style>
 
+          {/* travel plane is now rendered as a fixed overlay at top level */}
+
           <div className="max-w-7xl mx-auto w-full grid md:grid-cols-12 gap-12 items-center relative z-10">
             <div className="md:col-span-7 space-y-8">
               <h1 
                 className="text-5xl md:text-7xl font-semibold tracking-tighter leading-[1.1] max-w-2xl"
                 ref={heroTextRef}
-                style={{ opacity: 0 }}
               >
-                Wujudkan Pernikahan
+                {business.tagline || "Wujudkan Pernikahan"}
                 <br />
-                <span className="italic font-light opacity-90" style={textAccent}>terbaik anda</span> dengan kami.
+                <span className="italic font-light opacity-90" style={textAccent}>{business.taglineHighlight || "terbaik anda"}</span> {business.taglineEnd || "dengan kami."}
               </h1>
               <p 
                 className="max-w-lg opacity-70 text-lg md:text-xl leading-relaxed"
                 ref={heroDescRef}
-                style={{ opacity: 0 }}
               >
                 {business.description || "Kami membantu merancang dan mengeksekusi momen paling berharga dalam hidup Anda dengan presisi dan keindahan."}
               </p>
               <div 
                 className="flex flex-wrap items-center gap-4 pt-4"
                 ref={btnGroupRef}
-                style={{ opacity: 0 }}
               >
                 <div ref={magneticBtnRef} className="inline-block">
                   <a
@@ -456,10 +720,8 @@ const Template01 = ({ data }) => {
               {services.map((service, idx) => (
                 <div
                   key={idx}
-                  className="rounded-3xl p-8 lg:p-10 flex flex-col border border-opacity-20"
+                  className={`rounded-3xl p-8 lg:p-10 flex flex-col border border-opacity-20 ${getAnimClass('card')}`}
                   style={{ borderColor: servicesStyle.color }}
-                 
-                 
                 >
                   <h3 className="text-2xl font-bold mb-3 tracking-tight">{service.name}</h3>
                   <p className="mb-8 flex-1 text-base opacity-70 leading-relaxed">
@@ -548,9 +810,7 @@ const Template01 = ({ data }) => {
                 .map((item, idx) => (
                 <div 
                   key={idx} 
-                  className="group overflow-hidden rounded-3xl aspect-[4/3] bg-black relative"
-                 
-                 
+                  className={`group overflow-hidden rounded-3xl aspect-[4/3] bg-black relative ${getAnimClass('card')}`}
                 >
                   <img
                     src={item.image}

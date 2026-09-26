@@ -1,6 +1,9 @@
 export const defaultData = {
   business: {
     name: "Sultan's Management",
+    tagline: "Wujudkan Pernikahan",
+    taglineHighlight: "terbaik anda",
+    taglineEnd: "dengan kami.",
     description: "Organisasi komunitas profesional penyedia layanan event organizer, wedding, marketing, dan manajemen talenta.",
     about: "Sultan's Management adalah solusi terbaik untuk kebutuhan event dan manajemen talenta Anda. Kami memiliki pengalaman bertahun-tahun dalam mengelola berbagai acara skala besar maupun kecil.",
     logoURL: "",
@@ -9,7 +12,8 @@ export const defaultData = {
     primaryColor: "#000000",
     secondaryColor: "#ffffff",
     accentColor: "#3b82f6",
-    templateId: "template-01"
+    templateId: "template-01",
+    animationMode: "wo" // 'wo', 'eo', or 'travel'
   },
   services: [
     {
