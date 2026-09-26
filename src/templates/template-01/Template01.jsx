@@ -137,35 +137,39 @@ const ScrollDecorations = ({ mode, color }) => {
             }
           `}</style>
 
-          {/* Equalizer Left */}
-          <div className="fixed bottom-6 left-12 eq-container z-0 pointer-events-none">
-            {[1, 2, 3, 4, 5, 6].map((bar) => (
-              <div 
-                key={bar} 
-                className="eq-bar" 
-                style={{ 
-                  backgroundColor: color,
-                  animation: `eqBar ${0.4 + Math.random() * 0.6}s ease-in-out infinite alternate`,
-                  animationDelay: `${Math.random() * 0.5}s`
-                }}
-              />
-            ))}
-          </div>
+          {/* Equalizer Left & Right (Disabled temporarily) */}
+          {false && (
+            <>
+              <div className="fixed bottom-6 left-12 eq-container z-0 pointer-events-none">
+                {[1, 2, 3, 4, 5, 6].map((bar) => (
+                  <div 
+                    key={bar} 
+                    className="eq-bar" 
+                    style={{ 
+                      backgroundColor: color,
+                      animation: `eqBar ${0.4 + Math.random() * 0.6}s ease-in-out infinite alternate`,
+                      animationDelay: `${Math.random() * 0.5}s`
+                    }}
+                  />
+                ))}
+              </div>
 
-          {/* Equalizer Right */}
-          <div className="fixed bottom-6 right-12 eq-container z-0 pointer-events-none">
-            {[1, 2, 3, 4, 5, 6].map((bar) => (
-              <div 
-                key={bar} 
-                className="eq-bar" 
-                style={{ 
-                  backgroundColor: color,
-                  animation: `eqBar ${0.4 + Math.random() * 0.6}s ease-in-out infinite alternate`,
-                  animationDelay: `${Math.random() * 0.5}s`
-                }}
-              />
-            ))}
-          </div>
+              {/* Equalizer Right */}
+              <div className="fixed bottom-6 right-12 eq-container z-0 pointer-events-none">
+                {[1, 2, 3, 4, 5, 6].map((bar) => (
+                  <div 
+                    key={bar} 
+                    className="eq-bar" 
+                    style={{ 
+                      backgroundColor: color,
+                      animation: `eqBar ${0.4 + Math.random() * 0.6}s ease-in-out infinite alternate`,
+                      animationDelay: `${Math.random() * 0.5}s`
+                    }}
+                  />
+                ))}
+              </div>
+            </>
+          )}
 
           {/* Confetti Popper Left (Disabled temporarily) */}
           {false && (
@@ -499,7 +503,7 @@ const Template01 = ({ data }) => {
 
       <nav
         className="px-6 py-4 sticky top-0 z-50 border-b border-opacity-10 border-current backdrop-blur-md"
-        style={{ ...navbarStyle, position: 'sticky', overflow: 'hidden' }}
+        style={{ ...navbarStyle, position: 'sticky' }}
       >
         {/* Plane moved to hero section for travel mode */}
         <div className="max-w-7xl mx-auto flex justify-between items-center relative z-50">
