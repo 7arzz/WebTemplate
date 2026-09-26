@@ -167,61 +167,65 @@ const ScrollDecorations = ({ mode, color }) => {
             ))}
           </div>
 
-          {/* Confetti Popper Left */}
-          <div className="fixed bottom-0 left-4 w-12 h-12 z-0 pointer-events-none opacity-80" style={{ color: color }}>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-full h-full transform rotate-45">
-              <path d="M5.8 11.3 2 22l10.7-3.79"/>
-              <path d="M4 3h.01"/><path d="M22 8h.01"/><path d="M15 2h.01"/><path d="M22 20h.01"/>
-              <path d="m22 2-2.24.75a2.9 2.9 0 0 0-1.96 3.12v0c.1.86-.57 1.63-1.45 1.63h-.38c-.86 0-1.6.6-1.76 1.44L14 10"/>
-              <path d="m22 13-.82-.33c-.86-.34-1.82.2-1.98 1.11v0c-.11.7-.72 1.22-1.43 1.22H17"/>
-              <path d="m11 2 .33.82c.34.86-.2 1.82-1.11 1.98v0C9.52 4.9 9 5.52 9 6.23V7"/>
-              <path d="M11 13c1.93 1.93 2.83 4.17 2 5-.83.83-3.07-.07-5-2-1.93-1.93-2.83-4.17-2-5 .83-.83 3.07.07 5 2Z"/>
-            </svg>
-            {[...Array(20)].map((_, i) => (
-              <div
-                key={`left-${i}`}
-                className="absolute opacity-70"
-                style={{
-                  width: i % 2 === 0 ? '6px' : '8px',
-                  height: i % 2 === 0 ? '6px' : '8px',
-                  backgroundColor: ['#FF595E', '#FFCA3A', '#8AC926', '#1982C4', '#6A4C93', color][Math.floor(Math.random() * 6)],
-                  borderRadius: i % 3 === 0 ? '50%' : '2px',
-                  animation: `confettiBlastLeft ${1.5 + Math.random() * 1.5}s ease-out infinite`,
-                  animationDelay: `${Math.random() * 2}s`,
-                  left: '50%',
-                  top: '50%'
-                }}
-              />
-            ))}
-          </div>
+          {/* Confetti Popper Left (Disabled temporarily) */}
+          {false && (
+            <>
+              <div className="fixed bottom-0 left-4 w-12 h-12 z-0 pointer-events-none opacity-80" style={{ color: color }}>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-full h-full transform rotate-45">
+                  <path d="M5.8 11.3 2 22l10.7-3.79"/>
+                  <path d="M4 3h.01"/><path d="M22 8h.01"/><path d="M15 2h.01"/><path d="M22 20h.01"/>
+                  <path d="m22 2-2.24.75a2.9 2.9 0 0 0-1.96 3.12v0c.1.86-.57 1.63-1.45 1.63h-.38c-.86 0-1.6.6-1.76 1.44L14 10"/>
+                  <path d="m22 13-.82-.33c-.86-.34-1.82.2-1.98 1.11v0c-.11.7-.72 1.22-1.43 1.22H17"/>
+                  <path d="m11 2 .33.82c.34.86-.2 1.82-1.11 1.98v0C9.52 4.9 9 5.52 9 6.23V7"/>
+                  <path d="M11 13c1.93 1.93 2.83 4.17 2 5-.83.83-3.07-.07-5-2-1.93-1.93-2.83-4.17-2-5 .83-.83 3.07.07 5 2Z"/>
+                </svg>
+                {[...Array(20)].map((_, i) => (
+                  <div
+                    key={`left-${i}`}
+                    className="absolute opacity-70"
+                    style={{
+                      width: i % 2 === 0 ? '6px' : '8px',
+                      height: i % 2 === 0 ? '6px' : '8px',
+                      backgroundColor: ['#FF595E', '#FFCA3A', '#8AC926', '#1982C4', '#6A4C93', color][Math.floor(Math.random() * 6)],
+                      borderRadius: i % 3 === 0 ? '50%' : '2px',
+                      animation: `confettiBlastLeft ${1.5 + Math.random() * 1.5}s ease-out infinite`,
+                      animationDelay: `${Math.random() * 2}s`,
+                      left: '50%',
+                      top: '50%'
+                    }}
+                  />
+                ))}
+              </div>
 
-          {/* Confetti Popper Right */}
-          <div className="fixed bottom-0 right-4 w-12 h-12 z-0 pointer-events-none opacity-80" style={{ color: color }}>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-full h-full transform -rotate-45 scale-x-[-1]">
-              <path d="M5.8 11.3 2 22l10.7-3.79"/>
-              <path d="M4 3h.01"/><path d="M22 8h.01"/><path d="M15 2h.01"/><path d="M22 20h.01"/>
-              <path d="m22 2-2.24.75a2.9 2.9 0 0 0-1.96 3.12v0c.1.86-.57 1.63-1.45 1.63h-.38c-.86 0-1.6.6-1.76 1.44L14 10"/>
-              <path d="m22 13-.82-.33c-.86-.34-1.82.2-1.98 1.11v0c-.11.7-.72 1.22-1.43 1.22H17"/>
-              <path d="m11 2 .33.82c.34.86-.2 1.82-1.11 1.98v0C9.52 4.9 9 5.52 9 6.23V7"/>
-              <path d="M11 13c1.93 1.93 2.83 4.17 2 5-.83.83-3.07-.07-5-2-1.93-1.93-2.83-4.17-2-5 .83-.83 3.07.07 5 2Z"/>
-            </svg>
-             {[...Array(20)].map((_, i) => (
-              <div
-                key={`right-${i}`}
-                className="absolute opacity-70"
-                style={{
-                  width: i % 2 === 0 ? '6px' : '8px',
-                  height: i % 2 === 0 ? '6px' : '8px',
-                  backgroundColor: ['#FF595E', '#FFCA3A', '#8AC926', '#1982C4', '#6A4C93', color][Math.floor(Math.random() * 6)],
-                  borderRadius: i % 3 === 0 ? '50%' : '2px',
-                  animation: `confettiBlastRight ${1.5 + Math.random() * 1.5}s ease-out infinite`,
-                  animationDelay: `${Math.random() * 2}s`,
-                  right: '50%',
-                  top: '50%'
-                }}
-              />
-            ))}
-          </div>
+              {/* Confetti Popper Right */}
+              <div className="fixed bottom-0 right-4 w-12 h-12 z-0 pointer-events-none opacity-80" style={{ color: color }}>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-full h-full transform -rotate-45 scale-x-[-1]">
+                  <path d="M5.8 11.3 2 22l10.7-3.79"/>
+                  <path d="M4 3h.01"/><path d="M22 8h.01"/><path d="M15 2h.01"/><path d="M22 20h.01"/>
+                  <path d="m22 2-2.24.75a2.9 2.9 0 0 0-1.96 3.12v0c.1.86-.57 1.63-1.45 1.63h-.38c-.86 0-1.6.6-1.76 1.44L14 10"/>
+                  <path d="m22 13-.82-.33c-.86-.34-1.82.2-1.98 1.11v0c-.11.7-.72 1.22-1.43 1.22H17"/>
+                  <path d="m11 2 .33.82c.34.86-.2 1.82-1.11 1.98v0C9.52 4.9 9 5.52 9 6.23V7"/>
+                  <path d="M11 13c1.93 1.93 2.83 4.17 2 5-.83.83-3.07-.07-5-2-1.93-1.93-2.83-4.17-2-5 .83-.83 3.07.07 5 2Z"/>
+                </svg>
+                 {[...Array(20)].map((_, i) => (
+                  <div
+                    key={`right-${i}`}
+                    className="absolute opacity-70"
+                    style={{
+                      width: i % 2 === 0 ? '6px' : '8px',
+                      height: i % 2 === 0 ? '6px' : '8px',
+                      backgroundColor: ['#FF595E', '#FFCA3A', '#8AC926', '#1982C4', '#6A4C93', color][Math.floor(Math.random() * 6)],
+                      borderRadius: i % 3 === 0 ? '50%' : '2px',
+                      animation: `confettiBlastRight ${1.5 + Math.random() * 1.5}s ease-out infinite`,
+                      animationDelay: `${Math.random() * 2}s`,
+                      right: '50%',
+                      top: '50%'
+                    }}
+                  />
+                ))}
+              </div>
+            </>
+          )}
         </>
       )}
       {mode === 'wo' && (

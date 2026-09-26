@@ -328,6 +328,18 @@ const EditorForm = ({ data, setData, activeTab }) => {
               <input type="text" value={data.business.name} onChange={(e) => handleChange('business', 'name', e.target.value)} className="w-full border border-gray-300 rounded-md p-3" />
             </div>
             <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">Tagline (Awal)</label>
+              <input type="text" value={data.business.tagline || ''} onChange={(e) => handleChange('business', 'tagline', e.target.value)} placeholder="Wujudkan Pernikahan" className="w-full border border-gray-300 rounded-md p-3" />
+            </div>
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">Tagline (Highlight Miring)</label>
+              <input type="text" value={data.business.taglineHighlight || ''} onChange={(e) => handleChange('business', 'taglineHighlight', e.target.value)} placeholder="terbaik anda" className="w-full border border-gray-300 rounded-md p-3" />
+            </div>
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">Tagline (Akhir)</label>
+              <input type="text" value={data.business.taglineEnd || ''} onChange={(e) => handleChange('business', 'taglineEnd', e.target.value)} placeholder="dengan kami." className="w-full border border-gray-300 rounded-md p-3" />
+            </div>
+            <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">URL Logo (Opsional)</label>
               <input type="text" value={data.business.logoURL || ''} onChange={(e) => handleChange('business', 'logoURL', e.target.value)} placeholder="https://contoh.com/logo.png" className="w-full border border-gray-300 rounded-md p-3" />
             </div>
