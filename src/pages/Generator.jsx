@@ -34,7 +34,7 @@ const Generator = () => {
       setPublishedSlug(slug);
     } catch (err) {
       console.error("Publish gagal:", err);
-      alert("Gagal publish. Cek koneksi dan coba lagi.");
+      alert(`Gagal publish!\n\nError: ${err.code || err.message}`);
     }
   };
 
