@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import Template01 from '../templates/template-01/Template01';
+import { doc, getDoc } from 'firebase/firestore';
+import { db } from '../utils/firebase';
 
 const PublishedSite = () => {
   const { slug } = useParams();
@@ -8,18 +10,23 @@ const PublishedSite = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Simulate fetching from a database by checking localStorage
-    const savedData = localStorage.getItem(`site_${slug}`);
-    
-    if (savedData) {
+    const fetchSite = async () => {
       try {
-        setData(JSON.parse(savedData));
+        // Ambil data dari Firestore agar bisa diakses dari device manapun
+        const docRef = doc(db, 'sites', slug);
+        const docSnap = await getDoc(docRef);
+
+        if (docSnap.exists()) {
+          setData(docSnap.data());
+        }
       } catch (e) {
-        console.error("Error parsing saved site data", e);
+        console.error('Error fetching site data:', e);
+      } finally {
+        setLoading(false);
       }
-    }
-    
-    setLoading(false);
+    };
+
+    fetchSite();
   }, [slug]);
 
   if (loading) {

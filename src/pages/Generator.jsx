@@ -3,6 +3,8 @@ import { defaultData } from "../utils/schema";
 import Template01 from "../templates/template-01/Template01";
 import EditorForm from "../components/Generator/SidebarEditor"; // Now functions as EditorForm
 import { exportWebsite } from "../utils/exportWebsite";
+import { doc, setDoc } from "firebase/firestore";
+import { db } from "../utils/firebase";
 
 const Generator = () => {
   const [data, setData] = useState(defaultData);
@@ -16,14 +18,24 @@ const Generator = () => {
     exportWebsite(data);
   };
 
-  const handlePublish = () => {
+  const handlePublish = async () => {
     const slug = data.business.name
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, "-")
       .replace(/(^-|-$)+/g, "");
 
-    localStorage.setItem(`site_${slug}`, JSON.stringify(data));
-    setPublishedSlug(slug);
+    try {
+      // Simpan ke Firestore agar bisa diakses dari device manapun
+      await setDoc(doc(db, "sites", slug), {
+        ...data,
+        slug,
+        updatedAt: new Date().toISOString(),
+      });
+      setPublishedSlug(slug);
+    } catch (err) {
+      console.error("Publish gagal:", err);
+      alert("Gagal publish. Cek koneksi dan coba lagi.");
+    }
   };
 
   const navItems = [
