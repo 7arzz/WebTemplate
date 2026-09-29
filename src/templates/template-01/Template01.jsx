@@ -920,10 +920,10 @@ const Template01 = ({ data }) => {
               <img
                 src={business.logoURL}
                 alt="Logo"
-                className="w-10 h-10 object-cover rounded-full group-hover:scale-105 transition-transform duration-300"
+                className={`h-10 ${business.logoShape === 'rectangle' ? 'object-contain' : 'w-10 object-cover rounded-full'} group-hover:scale-105 transition-transform duration-300`}
               />
             ) : (
-              <div className="w-10 h-10 rounded-full flex items-center justify-center font-bold text-xl"
+              <div className={`h-10 flex items-center justify-center font-bold text-xl ${business.logoShape === 'rectangle' ? 'px-3 rounded' : 'w-10 rounded-full'}`}
                    style={{ background: `linear-gradient(135deg, ${theme.accentColor || '#d4af37'}, ${theme.accentColor || '#d4af37'}88)`, color: '#fff' }}>
                 {business.name.charAt(0)}
               </div>

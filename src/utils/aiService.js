@@ -1,6 +1,20 @@
 const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
 const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=${GEMINI_API_KEY}`;
 
+async function fetchWithRetry(url, options, retries = 3, backoff = 2000) {
+  for (let i = 0; i < retries; i++) {
+    const response = await fetch(url, options);
+    if (response.status === 503 || response.status === 429 || response.status >= 500) {
+      if (i === retries - 1) return response;
+      console.warn(`[AI Service] API Error (Status ${response.status}). Retrying in ${backoff}ms...`);
+      await new Promise(res => setTimeout(res, backoff));
+      backoff *= 1.5;
+      continue;
+    }
+    return response;
+  }
+}
+
 export async function generateWebsiteContent(prompt) {
   const systemPrompt = `Kamu adalah AI assistant yang membantu membuat konten website bisnis profesional dalam Bahasa Indonesia.
 
@@ -83,7 +97,7 @@ ATURAN:
   };
 
   try {
-    const response = await fetch(GEMINI_URL, {
+    const response = await fetchWithRetry(GEMINI_URL, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(requestBody),
@@ -170,7 +184,7 @@ Contoh:
   };
 
   try {
-    const response = await fetch(GEMINI_URL, {
+    const response = await fetchWithRetry(GEMINI_URL, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(requestBody),

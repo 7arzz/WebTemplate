@@ -7,6 +7,7 @@ export const defaultData = {
     description: "Organisasi komunitas profesional penyedia layanan event organizer, wedding, marketing, dan manajemen talenta.",
     about: "Sultan's Management adalah solusi terbaik untuk kebutuhan event dan manajemen talenta Anda. Kami memiliki pengalaman bertahun-tahun dalam mengelola berbagai acara skala besar maupun kecil.",
     logoURL: "",
+    logoShape: "circle",
   },
   theme: {
     primaryColor: "#000000",

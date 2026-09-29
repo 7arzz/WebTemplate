@@ -39,27 +39,24 @@ const Generator = () => {
 
   if (isPreviewMode) {
     return (
-      <div className="flex flex-col h-screen bg-gray-100 font-sans">
-        {/* Preview Top Bar */}
-        <div className="bg-gray-900 text-white px-6 py-4 flex justify-between items-center shadow-md z-50">
-          <div className="flex items-center space-x-4">
-            <button
-              onClick={() => setIsPreviewMode(false)}
-              className="px-4 py-2 bg-gray-800 hover:bg-gray-700 rounded-lg text-sm font-semibold transition-colors flex items-center space-x-2"
-            >
-              <span>← Back to Editor</span>
-            </button>
-            <span className="text-gray-400">|</span>
-            <span className="font-semibold text-lg">Live Preview Mode</span>
-          </div>
-          <div className="flex space-x-3">
-            <button
-              onClick={handlePublish}
-              className="px-6 py-2 bg-green-600 hover:bg-green-500 rounded-lg font-bold transition-colors"
-            >
-              Publish Now
-            </button>
-          </div>
+      <div className="flex flex-col h-screen bg-gray-100 font-sans relative">
+        {/* Floating Preview Controls */}
+        <div className="fixed bottom-8 left-1/2 -translate-x-1/2 bg-gray-900 text-white px-6 py-3 rounded-full flex items-center space-x-6 shadow-2xl z-[99999]">
+          <button
+            onClick={() => setIsPreviewMode(false)}
+            className="flex items-center space-x-2 text-sm font-semibold hover:text-gray-300 transition-colors"
+          >
+            <span>← Back to Editor</span>
+          </button>
+          <div className="w-px h-4 bg-gray-600"></div>
+          <span className="font-semibold text-sm">Live Preview</span>
+          <div className="w-px h-4 bg-gray-600"></div>
+          <button
+            onClick={handlePublish}
+            className="text-sm font-bold text-green-400 hover:text-green-300 transition-colors"
+          >
+            Publish
+          </button>
         </div>
 
         {/* Render Template */}

@@ -341,7 +341,17 @@ const EditorForm = ({ data, setData, activeTab }) => {
             </div>
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">URL Logo (Opsional)</label>
-              <input type="text" value={data.business.logoURL || ''} onChange={(e) => handleChange('business', 'logoURL', e.target.value)} placeholder="https://contoh.com/logo.png" className="w-full border border-gray-300 rounded-md p-3" />
+              <input type="text" value={data.business.logoURL || ''} onChange={(e) => handleChange('business', 'logoURL', e.target.value)} placeholder="https://contoh.com/logo.png" className="w-full border border-gray-300 rounded-md p-3 mb-3" />
+              
+              <label className="block text-sm font-semibold text-gray-700 mb-2">Bentuk Logo</label>
+              <select 
+                value={data.business.logoShape || 'circle'} 
+                onChange={(e) => handleChange('business', 'logoShape', e.target.value)}
+                className="w-full border border-gray-300 rounded-md p-3 outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="circle">Lingkaran (Bulat)</option>
+                <option value="rectangle">Persegi / Persegi Panjang</option>
+              </select>
             </div>
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">Deskripsi Singkat</label>
