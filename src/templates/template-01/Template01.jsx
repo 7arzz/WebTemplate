@@ -662,8 +662,10 @@ const Template01 = ({ data }) => {
 
 
   const handleBookingSubmit = () => {
-    const message = `Halo, saya ingin booking layanan.\n\nNama: ${bookingForm.name}\nLayanan: ${bookingForm.service}\nCatatan: ${bookingForm.notes}`;
-    const waUrl = `https://wa.me/${contact.whatsapp}?text=${encodeURIComponent(message)}`;
+    const greeting = business?.name ? `Halo ${business.name}` : 'Halo';
+    const message = `${greeting}, saya ingin booking layanan.\n\nNama: ${bookingForm.name}\nLayanan: ${bookingForm.service}\nCatatan: ${bookingForm.notes}`;
+    const cleanWa = (contact?.whatsapp || '').replace(/\D/g, '');
+    const waUrl = `https://wa.me/${cleanWa}?text=${encodeURIComponent(message)}`;
     window.open(waUrl, "_blank");
   };
 

@@ -5,15 +5,26 @@ const services = [
   'Wedding Creator', 'Konten Kreator', 'Class Marketing & Talent', 'Legalitas'
 ];
 
-export default function Booking() {
+export default function Booking({
+  companyName,
+  whatsapp,
+  business,
+  contact,
+  data,
+  services: propServices,
+} = {}) {
+  const activeCompanyName = companyName || business?.name || data?.business?.name || 'Perusahaan';
+  const activeWhatsapp = (whatsapp || contact?.whatsapp || data?.contact?.whatsapp || '6281234567890').replace(/\D/g, '');
+  const availableServices = propServices || data?.services?.map(s => s.name || s) || services;
+
   const [form, setForm] = useState({ name: '', phone: '', service: '', date: '', notes: '' });
 
   const handle = (e) => setForm({ ...form, [e.target.name]: e.target.value });
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    const text = `Halo Sultan's Management, saya ${form.name} tertarik dengan layanan ${form.service}.`;
-    window.open(`https://wa.me/6281234567890?text=${encodeURIComponent(text)}`, '_blank');
+    const text = `Halo ${activeCompanyName}, saya ${form.name} tertarik dengan layanan ${form.service}.`;
+    window.open(`https://wa.me/${activeWhatsapp}?text=${encodeURIComponent(text)}`, '_blank');
   };
 
   return (
@@ -58,7 +69,7 @@ export default function Booking() {
                     <label className="block text-sm font-medium text-gray-700 mb-2">Jenis Layanan</label>
                     <select required name="service" value={form.service} onChange={handle} className="field bg-white">
                       <option value="" disabled>Pilih Layanan...</option>
-                      {services.map(s => <option key={s} value={s}>{s}</option>)}
+                      {availableServices.map(s => <option key={s} value={s}>{s}</option>)}
                     </select>
                   </div>
                   <div>
