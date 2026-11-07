@@ -108,7 +108,7 @@ export const defaultData = {
   contact: {
     address: "Jakarta, Indonesia",
     whatsapp: "6281234567890",
-    email: "contact@sultans.id",
-    instagram: "sultans_id",
+    email: "[EMAIL_ADDRESS]",
+    instagram: "[Your Instagram]",
   },
 };

@@ -412,21 +412,6 @@ const ScrollDecorations = ({ mode, color }) => {
         // travel plane handled by TravelPlaneHeader canvas animation in navbar
       } else if (mode === 'eo') {
         // EO mode uses CSS animations for equalizer and confetti instead of ScrollTrigger
-      } else if (mode === 'wo') {
-        gsap.utils.toArray(".wo-petal").forEach((petal, i) => {
-          gsap.to(petal, {
-            y: "150vh",
-            rotate: "random(180, 360)",
-            x: "random(-150, 150)",
-            ease: "none",
-            scrollTrigger: {
-              trigger: document.body,
-              start: "top top",
-              end: "bottom bottom",
-              scrub: 2 + Math.random(),
-            }
-          });
-        });
       }
     }, containerRef);
     
@@ -559,18 +544,6 @@ const ScrollDecorations = ({ mode, color }) => {
               </div>
             </>
           )}
-        </>
-      )}
-      {mode === 'wo' && (
-        <>
-          {[...Array(12)].map((_, i) => (
-             <div key={i} className="wo-petal absolute opacity-40 w-5 h-5 rounded-tl-full rounded-br-full" style={{ 
-               backgroundColor: color, 
-               left: `${5 + i * 8}%`,
-               top: `-${10 + Math.random() * 20}%`,
-               transform: `rotate(${Math.random() * 360}deg)`
-             }}></div>
-          ))}
         </>
       )}
     </div>
